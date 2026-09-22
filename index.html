@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宁大学生今天吃什么（云端版）</title>
+<style>
+/* SECTION: base */
+:root{
+  --bg:#fdf6ec; --card:#ffffff; --ink:#3d2c1e; --sub:#8a7663;
+  --brand:#e8590c; --brand-soft:#ffe8d9; --line:#f0e4d3;
+  --shadow:0 6px 24px rgba(61,44,30,.08); --radius:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:56px}
+button{font-family:inherit;cursor:pointer;border:none}
+img{display:block;max-width:100%}
+input,textarea{font-family:inherit}
+.hidden{display:none!important}
+.js-err{padding:12px 16px;background:#fff0f0;color:#c92a2a;font-size:13px;text-align:center;border-bottom:1px solid #ffc9c9}
+
+/* SECTION: login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:
+  radial-gradient(circle at 15% 20%,#ffe3c2 0%,transparent 40%),
+  radial-gradient(circle at 85% 80%,#ffd8a8 0%,transparent 45%),var(--bg)}
+.login-card{width:100%;max-width:380px;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:36px 30px}
+.login-logo{width:64px;height:64px;border-radius:20px;background:var(--brand);color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.login-card h1{font-size:22px;text-align:center;margin-bottom:4px}
+.login-card p.tip{font-size:13px;color:var(--sub);text-align:center;margin-bottom:24px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;font-size:15px;border:1.5px solid var(--line);border-radius:12px;background:#fffdf9;outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--brand)}
+.btn-primary{width:100%;padding:13px;font-size:16px;font-weight:600;color:#fff;background:var(--brand);border-radius:12px;transition:transform .1s,background .2s}
+.btn-primary:hover{background:#d94e08}
+.btn-primary:active{transform:scale(.98)}
+.btn-quick{width:100%;margin-top:10px;padding:11px;font-size:14px;font-weight:600;color:var(--brand);background:var(--brand-soft);border:1.5px solid var(--brand);border-radius:12px}
+.btn-quick:hover{background:#ffdec7}
+.login-err{margin-top:10px;font-size:13px;color:#c92a2a;text-align:center;min-height:18px}
+.btn-cfg{margin-top:14px;width:100%;padding:9px;font-size:12.5px;color:var(--sub);background:#faf3e8;border-radius:10px}
+
+/* SECTION: config panel */
+.cfg-panel{background:#fffbe8;border:1px solid #ffe066;border-radius:14px;padding:16px;margin-bottom:16px}
+.cfg-panel h3{font-size:14.5px;margin-bottom:10px}
+.cfg-panel label{display:block;font-size:12px;color:var(--sub);margin:8px 0 4px}
+.cfg-panel input{width:100%;padding:9px 11px;font-size:13px;border:1.5px solid var(--line);border-radius:10px;background:#fff;outline:none}
+.cfg-panel .row{display:flex;gap:8px;margin-top:12px}
+.cfg-panel .row button{flex:1;padding:9px;font-size:13.5px;border-radius:10px}
+.cfg-save{background:var(--brand);color:#fff}
+.cfg-test{background:#e9ecef;color:var(--ink)}
+
+/* SECTION: app header */
+.app{max-width:960px;margin:0 auto;padding:20px 16px 40px}
+header.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .em{width:40px;height:40px;border-radius:12px;background:var(--brand);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center}
+.brand h1{font-size:18px}
+.user-box{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;display:flex;align-items:center;justify-content:center}
+.btn-ghost{padding:7px 13px;font-size:13px;color:var(--brand);background:var(--brand-soft);border-radius:10px}
+
+/* SECTION: search */
+.search-panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 18px 14px;margin-bottom:18px}
+.search-bar{position:relative;display:flex;align-items:center}
+.search-ico{position:absolute;left:14px;font-size:15px;pointer-events:none;opacity:.6}
+.search-bar input{width:100%;padding:13px 40px 13px 40px;font-size:15px;border:1.5px solid var(--line);border-radius:14px;background:#fffdf9;outline:none;transition:border-color .2s}
+.search-bar input:focus{border-color:var(--brand)}
+.btn-clear{position:absolute;right:10px;width:26px;height:26px;border-radius:50%;background:#f3e9db;color:var(--sub);font-size:13px}
+.suggest{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:#fffdf9;overflow:hidden}
+.suggest .item{padding:10px 14px;font-size:14px;color:var(--ink);cursor:pointer;border-bottom:1px solid #f6eee1}
+.suggest .item:last-child{border-bottom:none}
+.suggest .item:hover,.suggest .item.active{background:var(--brand-soft);color:var(--brand)}
+.suggest .item b{color:var(--brand);font-weight:700}
+.loc-row{display:flex;gap:10px;margin-top:12px}
+.loc-row button{flex:1;padding:10px 6px;font-size:13.5px;border-radius:12px;background:#faf3e8;color:var(--sub);border:1.5px solid transparent;white-space:nowrap}
+.loc-row button.on{background:var(--brand-soft);color:var(--brand);border-color:var(--brand);font-weight:700}
+
+/* SECTION: list */
+.main-empty{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 24px;min-height:200px}
+.state-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--sub);font-size:14px;padding:40px 0}
+.state-box .big{font-size:38px}
+.state-box .kw{color:var(--brand);font-weight:600}
+.list{display:flex;flex-direction:column;gap:14px}
+.shop-item{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fffdf9}
+.shop-item.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.shop-item.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.si-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.si-top h3{font-size:15.5px}
+.si-loc{font-size:12px;color:var(--sub);flex-shrink:0;text-align:right}
+.si-type{font-size:12.5px;color:var(--sub);margin-top:4px}
+.refresh-line{text-align:right;font-size:11.5px;color:#b7a692;margin-bottom:8px}
+.refresh-line a{color:var(--brand);cursor:pointer;font-weight:600}
+
+/* SECTION: add fab */
+.add-wrap{position:fixed;right:22px;bottom:74px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:60}
+.btn-add{width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;font-size:30px;font-weight:300;line-height:1;box-shadow:0 8px 20px rgba(232,89,12,.4);transition:transform .15s;display:flex;align-items:center;justify-content:center}
+.btn-add:active{transform:scale(.92)}
+.btn-add.open{transform:rotate(45deg)}
+.add-options{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.add-opt{padding:11px 18px;font-size:14px;font-weight:600;color:var(--brand);background:var(--card);border:1.5px solid var(--brand);border-radius:26px;box-shadow:var(--shadow)}
+.add-opt:hover{background:var(--brand-soft)}
+
+/* SECTION: page */
+.page{max-width:960px;margin:0 auto;padding:20px 16px 84px;min-height:100vh}
+.btn-back{width:34px;height:34px;border-radius:10px;background:var(--brand-soft);color:var(--brand);font-size:17px;display:flex;align-items:center;justify-content:center;margin-right:10px}
+.page-body{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;min-height:300px;color:var(--ink);font-size:14px}
+
+/* SECTION: review form */
+.nr-step{display:flex;flex-direction:column}
+#nr-step-pick,#sf-step-pick{align-items:center;justify-content:center;min-height:220px}
+.btn-pick-shop{padding:14px 34px;font-size:16px;font-weight:600;color:#fff;background:var(--brand);border-radius:30px;box-shadow:0 6px 16px rgba(232,89,12,.3)}
+.btn-pick-shop:active{transform:scale(.97)}
+.nr-h{font-size:16px;margin-bottom:12px}
+.shop-pick-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.shop-pick{padding:12px 14px;text-align:left;font-size:14.5px;border:1.5px solid var(--line);border-radius:12px;background:#fffdf9}
+.shop-pick:hover{border-color:var(--brand);background:var(--brand-soft)}
+.shop-pick small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+.shop-pick-add{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border:1.5px dashed #c9c1b6;border-radius:12px;background:transparent;color:#a89e92;font-size:13.5px;width:100%}
+.shop-pick-add:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+.shop-pick-add .plus{font-size:28px;font-weight:300;line-height:1}
+.btn-mini{align-self:flex-start;padding:8px 16px;font-size:13px;color:var(--brand);background:var(--brand-soft);border-radius:10px}
+.nr-shop-name{font-size:20px;font-weight:700;text-align:center;padding-bottom:16px;border-bottom:1px dashed var(--line);margin-bottom:18px}
+.nr-field{margin-bottom:18px}
+.nr-field label{display:block;font-size:14px;font-weight:600;color:var(--sub);margin-bottom:8px}
+.nr-field .req{color:#e03131}
+.nr-field input[type=text],.nr-field textarea{width:100%;padding:11px 13px;font-size:14.5px;border:1.5px solid var(--line);border-radius:12px;background:#fffdf9;outline:none;resize:vertical;transition:border-color .2s}
+.nr-field input[type=text]:focus,.nr-field textarea:focus{border-color:var(--brand)}
+.nr-sel-val{float:right;color:var(--brand);font-weight:700}
+.opt-tag{display:inline-block;margin-left:4px;padding:1px 8px;font-size:11px;font-weight:700;color:#1971c2;background:#e7f1fb;border-radius:20px;vertical-align:1px}
+.opt-note{font-size:11.5px;font-weight:400;color:#b7a692;margin-left:6px}
+.price-row{display:flex;align-items:center;gap:8px}
+.price-inp{width:88px;padding:10px 12px;font-size:14.5px;border:1.5px solid var(--line);border-radius:12px;background:#fffdf9;outline:none}
+.price-inp:focus{border-color:var(--brand)}
+.price-dash{font-size:18px;color:var(--sub);font-weight:700}
+.price-unit{font-size:13px;color:var(--sub)}
+.price-err{margin-top:6px;font-size:12px;color:#c92a2a}
+.score-row{display:flex;flex-wrap:wrap;gap:7px}
+.score-row button{width:40px;height:40px;border-radius:11px;font-size:15px;font-weight:600;background:#faf3e8;color:var(--sub);border:1.5px solid transparent}
+.score-row button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.opt-loc{display:flex;flex-wrap:wrap;gap:8px}
+.opt-loc button{padding:9px 16px;font-size:14px;border-radius:11px;background:#faf3e8;color:var(--sub);border:1.5px solid transparent}
+.opt-loc button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+.nr-foot{border-top:1px solid var(--line);padding-top:18px}
+.btn-confirm{width:100%;padding:14px;font-size:16px;font-weight:700;color:#fff;background:#b8b0a6;border-radius:14px;transition:background .25s}
+.btn-confirm.blue{background:#1971c2;box-shadow:0 6px 16px rgba(25,113,194,.35)}
+.btn-confirm:disabled{cursor:not-allowed}
+
+/* SECTION: shop modal */
+.modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-mask{position:absolute;inset:0;background:rgba(61,44,30,.45)}
+.modal-box{position:relative;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;background:var(--card);border-radius:20px;padding:22px 22px 18px;box-shadow:0 16px 48px rgba(61,44,30,.28)}
+.sm-head{display:flex;align-items:center;justify-content:space-between}
+.sm-head h2{font-size:20px}
+.modal-x{width:32px;height:32px;border-radius:50%;background:#faf3e8;color:var(--sub);font-size:14px}
+.sm-line2{display:flex;justify-content:space-between;font-size:13px;color:var(--sub);margin-top:8px}
+.sm-scores{display:flex;gap:12px;margin-top:14px}
+.sm-score{flex:1;border-radius:14px;padding:12px 14px;background:#faf6ee}
+.sm-score .tag{display:block;font-size:12.5px;font-weight:600}
+.sm-score .val{display:block;font-size:26px;font-weight:800;margin-top:2px}
+.sm-score.normal .tag,.sm-score.normal .val{color:#e8a400}
+.sm-score.safety .tag,.sm-score.safety .val{color:#7048e8}
+.sm-btns{margin-top:14px}
+.btn-view-reviews{width:100%;padding:11px;font-size:14.5px;font-weight:600;color:var(--brand);background:var(--brand-soft);border-radius:12px}
+.sm-reviews{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.review-list{max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.review{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fffdf9}
+.r-head{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
+.r-kind{padding:2px 8px;border-radius:20px;background:#fff3d6;color:#b07d00;font-weight:600;font-size:11.5px}
+.r-kind.sf{background:#f3f0ff;color:#7048e8}
+.r-score{margin-left:auto;color:var(--brand);font-weight:700}
+.r-dishes{font-size:12.5px;color:var(--sub);margin-top:6px}
+.r-text{font-size:13.5px;margin-top:5px;line-height:1.6}
+.review-empty{text-align:center;color:var(--sub);font-size:13px;padding:22px 0}
+
+/* SECTION: wheel */
+.rz-title{font-size:24px;text-align:center;margin-bottom:20px}
+.wheel-wrap{position:relative;width:300px;max-width:100%;margin:0 auto}
+.wheel-pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:18px solid #c92a2a;z-index:2;filter:drop-shadow(0 2px 3px rgba(0,0,0,.2))}
+#wheel-canvas{width:100%;height:auto;display:block;border-radius:50%;box-shadow:var(--shadow)}
+.wheel-result{margin:18px auto 0;max-width:340px;text-align:center;font-size:16px;min-height:24px;color:var(--sub)}
+.wheel-result.hit{color:var(--brand);font-weight:700;font-size:19px}
+#btn-spin{max-width:340px;margin:12px auto 0;display:block;width:100%;padding:15px;font-size:17px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f76707,#e8590c);border-radius:14px;box-shadow:0 6px 16px rgba(232,89,12,.35)}
+.wheel-edit{margin-top:26px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.wheel-edit h3{font-size:15px;margin-bottom:12px}
+.we-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.we-row label{font-size:13.5px;color:var(--sub)}
+.we-row input{width:76px;padding:8px 10px;font-size:14px;border:1.5px solid var(--line);border-radius:10px;background:#fffdf9;outline:none}
+.we-item{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.we-item .idx{width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.we-item input{flex:1;padding:8px 11px;font-size:14px;border:1.5px solid var(--line);border-radius:10px;background:#fffdf9;outline:none;min-width:0}
+.we-tip{font-size:12px;color:#b7a692;margin:10px 0 8px}
+
+/* SECTION: profile */
+.pf-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.pf-current{font-size:17px;font-weight:700;margin-bottom:16px}
+.pf-logout{margin-top:24px;background:#c92a2a}
+.pf-logout:hover{background:#b02525}
+
+/* SECTION: tabbar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;box-shadow:0 -4px 16px rgba(61,44,30,.06);z-index:70}
+.tabbar button{flex:1;padding:11px 0 13px;font-size:13.5px;color:var(--sub);background:none;display:flex;align-items:center;justify-content:center;gap:5px}
+.tabbar button.on{color:var(--brand);font-weight:700}
+
+/* SECTION: toast */
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(61,44,30,.92);color:#fff;padding:11px 20px;border-radius:30px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:640px){
+  .loc-row{flex-direction:column}
+  header.bar{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<!-- SECTION: js guard -->
+<div id="js-err" class="js-err hidden"></div>
+<noscript><div class="js-err">本页面需要 JavaScript 才能运行。请在 Chrome / Edge 浏览器中直接打开此文件。</div></noscript>
+<script>
+window.onerror = function (msg, src, line) {
+  var b = document.getElementById('js-err');
+  if (b) { b.textContent = '页面脚本异常（第' + line + '行）：' + msg; b.classList.remove('hidden'); }
+};
+</script>
+
+<!-- SECTION: login view -->
+<div class="login-wrap" id="view-login">
+  <div class="login-card">
+    <div class="login-logo">🍜</div>
+    <h1>宁大学生今天吃什么</h1>
+    <p class="tip">云端共用版 · 解决每天最难的一问</p>
+    <!-- SECTION: config panel -->
+    <div class="cfg-panel hidden" id="cfg-panel">
+      <h3>⚙ Supabase 连接配置</h3>
+      <label>Project URL（如 https://xxxx.supabase.co）</label>
+      <input id="cfg-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off">
+      <label>anon key（公开密钥）</label>
+      <input id="cfg-key" type="text" placeholder="eyJhbGciOi..." autocomplete="off">
+      <div class="row">
+        <button class="cfg-save" id="cfg-save">保存</button>
+        <button class="cfg-test" id="cfg-close">收起</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="in-user">昵称</label>
+      <input id="in-user" type="text" placeholder="请输入昵称" autocomplete="off" maxlength="16">
+    </div>
+    <button class="btn-primary" id="btn-login" data-primary-action>进入</button>
+    <button class="btn-quick hidden" id="btn-quick"></button>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn-cfg" id="btn-cfg">☁ 云端配置</button>
+  </div>
+</div>
+
+<!-- SECTION: app view -->
+<div class="app hidden" id="view-app">
+  <header class="bar">
+    <div class="brand">
+      <div class="em">🍜</div>
+      <h1>宁大学生今天吃什么</h1>
+    </div>
+    <div class="user-box">
+      <div class="avatar" id="user-avatar">宁</div>
+      <span id="user-name">同学</span>
+      <button class="btn-ghost" id="btn-logout">退出</button>
+    </div>
+  </header>
+
+  <!-- SECTION: search -->
+  <section class="search-panel">
+    <div class="search-bar">
+      <span class="search-ico">🔍</span>
+      <input id="search-input" type="search" placeholder="搜索店铺：名称 / 位置 / 类型 / 菜品 / 价位 / 综合评分 / 食安评分" autocomplete="off">
+      <button class="btn-clear hidden" id="btn-clear" aria-label="清空">✕</button>
+    </div>
+    <div class="suggest hidden" id="suggest"></div>
+    <div class="loc-row" id="loc-row">
+      <button type="button" data-loc="云创">云创</button>
+      <button type="button" data-loc="甬江村">甬江村</button>
+      <button type="button" data-loc="北区步行街及周边">北区步行街及周边</button>
+    </div>
+  </section>
+
+  <main class="main-empty" id="main-area">
+    <p class="refresh-line"><a id="btn-refresh">↻ 刷新店铺列表</a> <span id="load-time"></span></p>
+    <div class="state-box" id="state-box">
+      <span class="big">🏪</span>
+      <span>加载中…</span>
+    </div>
+    <div class="list" id="result-list"></div>
+  </main>
+
+  <!-- SECTION: add entry -->
+  <div class="add-wrap" id="add-wrap">
+    <div class="add-options hidden" id="add-options">
+      <button class="add-opt" id="btn-new-review">✍️ 创建新评价</button>
+      <button class="add-opt" id="btn-safety-review">🛡️ 食安评分</button>
+    </div>
+    <button class="btn-add" id="btn-add" aria-label="添加">+</button>
+  </div>
+</div>
+
+<!-- SECTION: random page -->
+<div class="page hidden" id="page-random">
+  <h1 class="rz-title">宁大学生今天吃什么？</h1>
+  <div class="wheel-wrap">
+    <div class="wheel-pointer"></div>
+    <canvas id="wheel-canvas" width="300" height="300"></canvas>
+  </div>
+  <div class="wheel-result" id="wheel-result">设置好转盘内容后，点击"开始转盘"</div>
+  <button id="btn-spin" data-primary-action>🎡 开始转盘</button>
+  <div class="wheel-edit">
+    <h3>转盘设置</h3>
+    <div class="we-row">
+      <label for="wheel-count">几等分</label>
+      <input id="wheel-count" type="number" min="2" max="12" value="4" inputmode="numeric">
+      <button class="btn-mini" id="btn-wheel-apply">应用等分</button>
+    </div>
+    <div id="wheel-items"></div>
+    <p class="we-tip">填写各等分内容后，点"更新转盘"生效（转盘为本机个人配置）</p>
+    <button class="btn-mini" id="btn-wheel-save">更新转盘</button>
+  </div>
+</div>
+
+<!-- SECTION: profile page -->
+<div class="page hidden" id="page-profile">
+  <div class="pf-card">
+    <h3 class="nr-h">我的昵称</h3>
+    <p class="pf-current" id="pf-current"></p>
+    <div class="nr-field">
+      <label for="pf-input">修改昵称</label>
+      <input id="pf-input" type="text" placeholder="请输入新昵称" autocomplete="off" maxlength="16">
+    </div>
+    <button class="btn-mini" id="pf-save">保存昵称</button>
+    <button class="btn-primary pf-logout" id="pf-logout">退出网站</button>
+  </div>
+</div>
+
+<!-- SECTION: review pages -->
+<div class="page hidden" id="page-new-review">
+  <header class="bar">
+    <div class="brand">
+      <button class="btn-back" data-back>←</button>
+      <h1>创建新评价<small>评价撰写</small></h1>
+    </div>
+  </header>
+  <main class="page-body">
+    <div class="nr-step" id="nr-step-pick">
+      <button class="btn-pick-shop" id="nr-btn-pick-shop" data-primary-action>选择店铺</button>
+    </div>
+    <div class="nr-step hidden" id="nr-step-list">
+      <h3 class="nr-h">选择要评价的店铺</h3>
+      <div class="shop-pick-list" id="nr-shop-pick-list"></div>
+      <button class="btn-mini" id="nr-btn-back-from-list">返回</button>
+    </div>
+    <div class="nr-step hidden" id="nr-step-form">
+      <div class="nr-shop-name" id="nr-shop-name"></div>
+      <div class="nr-field">
+        <label>评分 <span class="req">*</span><span class="nr-sel-val" id="nr-score-val"></span></label>
+        <div class="score-row" id="nr-score-row"></div>
+      </div>
+      <div class="nr-field">
+        <label for="nr-dishes">菜品 <span class="req">*</span></label>
+        <input id="nr-dishes" type="text" placeholder="请输入你吃的菜品" autocomplete="off" maxlength="50">
+      </div>
+      <div class="nr-field">
+        <label>店铺价位 <span class="opt-tag">选填</span><span class="opt-note">两个价位都要填，或都不填</span></label>
+        <div class="price-row">
+          <input id="nr-price-min" class="price-inp" type="number" min="0" max="500" step="1" placeholder="0" inputmode="numeric">
+          <span class="price-dash">-</span>
+          <input id="nr-price-max" class="price-inp" type="number" min="0" max="500" step="1" placeholder="500" inputmode="numeric">
+          <span class="price-unit">元</span>
+        </div>
+        <p class="price-err hidden" id="nr-price-err">价位需两个数字都填写，或都留空</p>
+      </div>
+      <div class="nr-field">
+        <label for="nr-text">评价 <span class="req">*</span></label>
+        <textarea id="nr-text" rows="7" placeholder="说说这家店怎么样：口味、分量、服务、排队……"></textarea>
+      </div>
+      <div class="nr-foot">
+        <button class="btn-confirm" id="nr-btn-confirm" disabled>确定</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="page hidden" id="page-safety-review">
+  <header class="bar">
+    <div class="brand">
+      <button class="btn-back" data-back>←</button>
+      <h1>食安评分<small>食品安全评分撰写</small></h1>
+    </div>
+  </header>
+  <main class="page-body">
+    <div class="nr-step" id="sf-step-pick">
+      <button class="btn-pick-shop" id="sf-btn-pick-shop" data-primary-action>选择店铺</button>
+    </div>
+    <div class="nr-step hidden" id="sf-step-list">
+      <h3 class="nr-h">选择要评分的店铺</h3>
+      <div class="shop-pick-list" id="sf-shop-pick-list"></div>
+      <button class="btn-mini" id="sf-btn-back-from-list">返回</button>
+    </div>
+    <div class="nr-step hidden" id="sf-step-form">
+      <div class="nr-shop-name" id="sf-shop-name"></div>
+      <div class="nr-field">
+        <label>评分 <span class="req">*</span><span class="nr-sel-val" id="sf-score-val"></span></label>
+        <div class="score-row" id="sf-score-row"></div>
+      </div>
+      <div class="nr-field">
+        <label for="sf-dishes">菜品 <span class="req">*</span></label>
+        <input id="sf-dishes" type="text" placeholder="请输入你吃的菜品" autocomplete="off" maxlength="50">
+      </div>
+      <div class="nr-field">
+        <label for="sf-text">评价 <span class="req">*</span></label>
+        <textarea id="sf-text" rows="7" placeholder="说说这家店的食品卫生与安全情况……"></textarea>
+      </div>
+      <div class="nr-foot">
+        <button class="btn-confirm" id="sf-btn-confirm" disabled>确定</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="page hidden" id="page-new-shop">
+  <header class="bar">
+    <div class="brand">
+      <button class="btn-back" data-back>←</button>
+      <h1>添加店铺<small>建立店铺档案</small></h1>
+    </div>
+  </header>
+  <main class="page-body">
+    <div class="nr-field">
+      <label for="ns-name">店铺名称 <span class="req">*</span></label>
+      <input id="ns-name" type="text" placeholder="请输入店铺名称" autocomplete="off" maxlength="30">
+    </div>
+    <div class="nr-field">
+      <label>所在位置 <span class="req">*</span></label>
+      <div class="opt-loc" id="ns-loc-row">
+        <button type="button" data-loc="云创">云创</button>
+        <button type="button" data-loc="甬江村">甬江村</button>
+        <button type="button" data-loc="北区步行街及周边">北区步行街及周边</button>
+      </div>
+    </div>
+    <div class="nr-field">
+      <label for="ns-type">所属类型 <span class="req">*</span></label>
+      <input id="ns-type" type="text" placeholder="请输入所属类型，如：面食 / 快餐 / 火锅" autocomplete="off" maxlength="20">
+    </div>
+    <div class="nr-foot">
+      <button class="btn-confirm" id="ns-btn-confirm" disabled>确定</button>
+    </div>
+  </main>
+</div>
+
+<!-- SECTION: shop modal -->
+<div class="modal hidden" id="shop-modal">
+  <div class="modal-mask" data-close-modal></div>
+  <div class="modal-box">
+    <div class="sm-head">
+      <h2 id="sm-name"></h2>
+      <button class="modal-x" data-close-modal aria-label="关闭">✕</button>
+    </div>
+    <div class="sm-line2"><span id="sm-type"></span><span id="sm-loc"></span></div>
+    <div class="sm-scores">
+      <div class="sm-score normal"><span class="tag">店铺评分</span><span class="val" id="sm-score-normal"></span></div>
+      <div class="sm-score safety"><span class="tag">食安评分</span><span class="val" id="sm-score-safety"></span></div>
+    </div>
+    <div class="sm-btns"><button class="btn-view-reviews" id="btn-view-reviews">查看评价</button></div>
+    <div class="sm-reviews hidden" id="sm-reviews">
+      <div class="review-list" id="review-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION: tabbar -->
+<nav class="tabbar hidden" id="tabbar">
+  <button type="button" data-tab="view-app" class="on">🏠 主页</button>
+  <button type="button" data-tab="page-random">🎡 随机</button>
+  <button type="button" data-tab="page-profile">👤 个人</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+/* SECTION: supabase client */
+// 数据全部存放在 Supabase 云端，所有使用者共享同一份店铺与评价数据。
+// 配置在登录页"☁ 云端配置"填入 Project URL 与 anon key，保存在本机。
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function cfg(){ return LS.get('ndt_supa_cfg', null); }
+async function sb(path, opts){
+  const c = cfg();
+  if(!c || !c.url || !c.key) throw new Error('尚未配置 Supabase 连接，请先在登录页"云端配置"填写');
+  // 密钥双通道：请求头 + URL 参数（apikey query 参数），防止代理/插件剥离请求头导致 401
+  // 请求头合并：默认头（含 Content-Type: application/json）为基础，opts.headers 仅追加/覆盖个别键，防止 Prefer 等头把默认头整体替换
+  const sep = path.includes('?') ? '&' : '?';
+  const { headers: extraHeaders, ...restOpts } = opts || {};
+  const r = await fetch(c.url + '/rest/v1/' + path + sep + 'apikey=' + encodeURIComponent(c.key), Object.assign({}, restOpts, {
+    headers: Object.assign({
+      'apikey': c.key,
+      'Authorization': 'Bearer ' + c.key,
+      'Content-Type': 'application/json'
+    }, extraHeaders || {})
+  }));
+  if(r.status === 409) { const e = new Error('duplicate'); e.status = 409; throw e; }
+  if(!r.ok){
+    let detail = '';
+    try{ detail = (await r.json()).message || ''; }catch(e){}
+    throw new Error('云端请求失败(' + r.status + ')' + (detail ? '：' + detail : ''));
+  }
+  if(r.status === 204) return null;
+  const ct = r.headers.get('content-type') || '';
+  return ct.includes('json') ? r.json() : null;
+}
+function $id(id){ return document.getElementById(id); }
+
+/* SECTION: toast */
+let toastTimer;
+function toast(msg){
+  const t = $id('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* SECTION: nickname rules */
+function rand4(){ return String(Math.floor(1000 + Math.random() * 9000)); }
+function baseName(s){ return String(s || '').replace(/#\d{4}$/, '').trim(); }
+function makeNickname(raw){ return baseName(raw) + '#' + rand4(); }
+// 设备标识：本机生成一次并持久保存，服务端按 device_id 保证每台设备唯一身份
+function deviceId(){
+  let d = LS.get('ndt_device_id', '');
+  if(!d){ d = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); LS.set('ndt_device_id', d); }
+  return d;
+}
+let identityCache = '';
+function currentIdentity(){ return identityCache; }
+async function fetchIdentity(){
+  const rows = await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()) + '&select=nickname');
+  identityCache = (rows && rows[0]) ? rows[0].nickname : '';
+  return identityCache;
+}
+async function createIdentity(nick){
+  await sb('identities', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ device_id: deviceId(), nickname: nick }) });
+  identityCache = nick;
+}
+
+/* SECTION: login */
+let loginBusy = false;
+async function doLogin(){
+  if(loginBusy) return;
+  const raw = baseName($id('in-user').value.trim());
+  const err = $id('login-err');
+  if(!raw){ err.textContent = '请输入昵称'; return; }
+  if(!cfg()){ err.textContent = '请先在下方"云端配置"填写 Supabase 连接信息'; showCfg(true); return; }
+  loginBusy = true; err.textContent = '连接云端…';
+  try{
+    let idn = currentIdentity();
+    if(!idn){ try{ idn = await fetchIdentity(); }catch(e){ err.textContent = e.message; loginBusy = false; return; } }
+    if(idn){
+      if(baseName(idn) !== raw){
+        err.textContent = '本设备已创建身份「' + baseName(idn) + '」，仅可用该昵称登录';
+        showQuickContinue(idn);
+        loginBusy = false; return;
+      }
+    } else {
+      const nick = makeNickname(raw);
+      try{ await createIdentity(nick); toast('已为本设备创建身份：' + nick); }
+      catch(e){
+        if(e.status === 409){ err.textContent = '该昵称的随机号已被占用，请重新输入昵称'; loginBusy = false; return; }
+        err.textContent = e.message; loginBusy = false; return;
+      }
+    }
+    LS.set('ndt_session', { user: identityCache });
+    err.textContent = '';
+    enterApp(identityCache);
+  } finally { loginBusy = false; }
+}
+function showQuickContinue(idn){
+  const q = $id('btn-quick');
+  if(!q) return;
+  if(idn){
+    q.textContent = '以本机身份继续：' + idn;
+    q.classList.remove('hidden');
+    q.onclick = () => { LS.set('ndt_session', { user: idn }); enterApp(idn); };
+  } else {
+    q.classList.add('hidden');
+  }
+}
+function enterApp(username){
+  identityCache = username;
+  showPage('view-app');
+  $id('user-name').textContent = username;
+  $id('user-avatar').textContent = username.slice(0, 1).toUpperCase();
+  refreshShops();
+}
+function logout(){
+  identityCache = '';
+  LS.set('ndt_session', null);
+  $id('view-app').classList.add('hidden');
+  $id('tabbar').classList.add('hidden');
+  $id('view-login').classList.remove('hidden');
+  $id('in-user').value = '';
+  showQuickContinue('');
+  toast('已退出登录');
+}
+
+/* SECTION: config panel */
+function showCfg(on){ $id('cfg-panel').classList.toggle('hidden', !on); if(on){ const c = cfg() || {}; $id('cfg-url').value = c.url || ''; $id('cfg-key').value = c.key || ''; } }
+$id('btn-cfg').onclick = () => showCfg($id('cfg-panel').classList.contains('hidden'));
+$id('cfg-close').onclick = () => showCfg(false);
+$id('cfg-save').onclick = async () => {
+  const url = $id('cfg-url').value.trim().replace(/\/+$/, ''), key = $id('cfg-key').value.trim();
+  if(!/^https?:\/\/.+/.test(url) || !key){ toast('请填写完整的 Project URL 与 anon key'); return; }
+  LS.set('ndt_supa_cfg', { url: url, key: key });
+  toast('已保存，正在测试连接…');
+  try{ await refreshShops(true); toast('云端连接成功 ✓'); showCfg(false); }
+  catch(e){ toast('连接失败：' + e.message); }
+};
+
+/* SECTION: shops data (cloud) */
+let shopsCache = [];
+async function refreshShops(silent){
+  try{
+    shopsCache = await sb('shops?select=*&order=name.asc');
+    $id('load-time').textContent = '更新于 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    renderSearch();
+    if(!silent) toast('店铺列表已刷新');
+    return true;
+  }catch(e){
+    $id('state-box').classList.remove('hidden');
+    $id('state-box').innerHTML = '<span class="big">☁️</span><span>' + esc(e.message) + '</span>';
+    return false;
+  }
+}
+$id('btn-refresh').onclick = () => refreshShops();
+
+/* SECTION: shop search */
+// 七个可搜索维度：店铺名称 / 所在位置 / 所属类型 / 菜品 / 价位 / 综合评分 / 食安评分
+const DIMS = [
+  { key: 'name',    label: '店铺名称' },
+  { key: 'loc',     label: '所在位置' },
+  { key: 'type',    label: '所属类型' },
+  { key: 'dishes',  label: '菜品' },
+  { key: 'price',   label: '价位' },
+  { key: 'score',   label: '综合评分' },
+  { key: 'safety',  label: '食安评分' }
+];
+// 菜品/价位/评分等动态维度从评价记录聚合（服务端 reviews 表），档案里体现为可搜文本
+const shopAgg = new Map(); // name -> { dishes:Set, price:Set }
+async function loadAggregates(){
+  try{
+    const rows = await sb('reviews?select=shop,dishes,price&limit=5000');
+    shopAgg.clear();
+    rows.forEach(r => {
+      if(!shopAgg.has(r.shop)) shopAgg.set(r.shop, { dishes: new Set(), price: new Set() });
+      const g = shopAgg.get(r.shop);
+      if(r.dishes) g.dishes.add(r.dishes);
+      if(r.price) g.price.add(r.price);
+    });
+  }catch(e){ /* 聚合失败不阻塞搜索 */ }
+}
+function shopFieldValue(shop, key){
+  if(key === 'dishes' || key === 'price'){
+    const g = shopAgg.get(shop.name);
+    return g ? [...g[key]].join('、') : '';
+  }
+  return shop[key] == null ? '' : String(shop[key]);
+}
+let locView = null;
+function setLocView(loc){
+  locView = (locView === loc) ? null : loc;
+  document.querySelectorAll('#loc-row button').forEach(b => b.classList.toggle('on', b.dataset.loc === locView));
+  renderSearch();
+}
+function inLocView(s){ return !locView || String(s.loc || '') === locView; }
+function matchShop(shop, kws){
+  const hit = [];
+  DIMS.forEach(d => {
+    const text = shopFieldValue(shop, d.key).toLowerCase();
+    if(text && kws.every(k => text.includes(k))) hit.push(d.label);
+  });
+  return hit;
+}
+function searchShops(){
+  const raw = $id('search-input').value.trim();
+  const kws = raw ? raw.toLowerCase().split(/\s+/).filter(Boolean) : [];
+  return shopsCache
+    .filter(inLocView)
+    .map(s => ({ shop: s, hitDims: kws.length ? matchShop(s, kws) : DIMS.map(d => d.label) }))
+    .filter(x => !kws.length || x.hitDims.length > 0)
+    .sort((a, b) => locView ? 0 : String(a.shop.name).localeCompare(String(b.shop.name), 'zh-Hans'));
+}
+function renderSearch(){
+  const results = searchShops();
+  const list = $id('result-list'), state = $id('state-box');
+  const kw = $id('search-input').value.trim();
+  $id('btn-clear').classList.toggle('hidden', !kw && !locView);
+  list.innerHTML = '';
+  if(!shopsCache.length){
+    state.classList.remove('hidden');
+    state.innerHTML = '<span class="big">🏪</span><span>还没有店铺，点击右下角 + 创建第一个档案</span>';
+    return;
+  }
+  if(locView && !shopsCache.some(inLocView)){
+    state.classList.remove('hidden');
+    state.innerHTML = '<span class="big">📍</span><span>「' + esc(locView) + '」还没有店铺</span>';
+    return;
+  }
+  if(!results.length){
+    state.classList.remove('hidden');
+    state.innerHTML = '<span class="big">🔍</span><span>没有匹配的店铺' + (kw ? '：<span class="kw">' + esc(kw) + '</span>' : '') + (locView ? '（范围：' + esc(locView) + '）' : '') + '</span><span style="font-size:12px">换个关键词试试</span>';
+    return;
+  }
+  state.classList.add('hidden');
+  results.forEach(({ shop }) => {
+    const card = document.createElement('article');
+    card.className = 'shop-item clickable';
+    card.innerHTML =
+      '<div class="si-top"><h3>' + esc(shop.name || '未命名店铺') + '</h3><span class="si-loc">' + esc(shop.loc || '') + '</span></div>' +
+      '<div class="si-type">' + esc(shop.type || '未填类型') + '</div>';
+    card.onclick = () => openShopModal(shop.name);
+    list.appendChild(card);
+  });
+}
+
+/* SECTION: suggest logic */
+const LOC_OPTIONS = ['云创', '甬江村', '北区步行街及周边'];
+function suggestPool(){
+  const terms = new Set(LOC_OPTIONS);
+  shopsCache.filter(inLocView).forEach(s => {
+    DIMS.forEach(d => {
+      const v = shopFieldValue(s, d.key);
+      String(v).split('、').forEach(x => x && terms.add(x));
+    });
+  });
+  return [...terms];
+}
+function renderSuggest(){
+  const box = $id('suggest');
+  const kw = $id('search-input').value.trim().toLowerCase();
+  if(!kw){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+  const hits = suggestPool().filter(t => String(t).toLowerCase().startsWith(kw)).slice(0, 12);
+  if(!hits.length){ box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.innerHTML = hits.map(t =>
+    '<div class="item" data-term="' + esc(t) + '"><b>' + esc(String(t).slice(0, kw.length)) + '</b>' + esc(String(t).slice(kw.length)) + '</div>'
+  ).join('');
+  box.classList.remove('hidden');
+  box.querySelectorAll('.item').forEach(el => {
+    el.onmousedown = e => {
+      e.preventDefault();
+      $id('search-input').value = el.dataset.term;
+      box.classList.add('hidden');
+      renderSearch();
+    };
+  });
+}
+
+/* SECTION: add menu & pages */
+let addOpen = false;
+function setAddOpen(open){
+  addOpen = open;
+  $id('add-options').classList.toggle('hidden', !open);
+  $id('btn-add').classList.toggle('open', open);
+}
+$id('btn-add').onclick = () => setAddOpen(!addOpen);
+function showPage(id){
+  $id('view-login').classList.add('hidden');
+  ['view-app', 'page-random', 'page-profile', 'page-new-review', 'page-safety-review', 'page-new-shop'].forEach(v => $id(v).classList.toggle('hidden', v !== id));
+  const isTab = ['view-app', 'page-random', 'page-profile'].includes(id);
+  $id('tabbar').classList.toggle('hidden', !isTab);
+  $id('add-wrap').classList.toggle('hidden', id !== 'view-app');
+  if(isTab) document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  setAddOpen(false);
+  window.scrollTo(0, 0);
+  if(id === 'page-random') wheelUI();
+  if(id === 'page-profile') profileUI();
+}
+document.querySelectorAll('.tabbar button').forEach(b => { b.onclick = () => showPage(b.dataset.tab); });
+$id('btn-new-review').onclick = () => { reviewFlow.nr.reset(); showPage('page-new-review'); };
+$id('btn-safety-review').onclick = () => { reviewFlow.sf.reset(); showPage('page-safety-review'); };
+document.querySelectorAll('[data-back]').forEach(b => { b.onclick = () => showPage('view-app'); });
+
+/* SECTION: shop modal */
+function avgScoreDropExtremes(list){
+  if(!list.length) return null;
+  let arr = [...list].sort((a, b) => a - b);
+  if(arr.length >= 3) arr = arr.slice(1, -1);
+  return (arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1);
+}
+function fmtTime(iso){
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+let curModalShop = null, modalReviews = [];
+async function openShopModal(shopName){
+  curModalShop = shopName;
+  const shop = shopsCache.find(s => s.name === shopName) || { name: shopName };
+  $id('sm-name').textContent = shop.name || '未命名店铺';
+  $id('sm-type').textContent = '所属类型：' + (shop.type || '—');
+  $id('sm-loc').textContent = shop.loc || '';
+  $id('sm-score-normal').textContent = '…';
+  $id('sm-score-safety').textContent = '…';
+  $id('sm-reviews').classList.add('hidden');
+  $id('shop-modal').classList.remove('hidden');
+  try{
+    modalReviews = await sb('reviews?shop=eq.' + encodeURIComponent(shopName) + '&select=kind,score,dishes,price,body,created_at');
+    $id('sm-score-normal').textContent = (v => v === null ? '暂无评分' : v)(avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'normal').map(r => r.score)));
+    $id('sm-score-safety').textContent = (v => v === null ? '暂无评分' : v)(avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'safety').map(r => r.score)));
+  }catch(e){
+    $id('sm-score-normal').textContent = '—';
+    $id('sm-score-safety').textContent = '—';
+    toast(e.message);
+  }
+}
+function closeShopModal(){ $id('shop-modal').classList.add('hidden'); }
+document.querySelectorAll('[data-close-modal]').forEach(el => { el.onclick = closeShopModal; });
+$id('btn-view-reviews').onclick = () => {
+  const box = $id('sm-reviews');
+  box.classList.toggle('hidden');
+  if(!box.classList.contains('hidden')) renderReviews();
+};
+// 评价按时间由晚到早，完全匿名展示（不显示任何作者信息）
+function renderReviews(){
+  const shown = [...modalReviews].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const list = $id('review-list');
+  list.innerHTML = '';
+  if(!shown.length){
+    list.innerHTML = '<div class="review-empty">还没有人评价过这家店</div>';
+    return;
+  }
+  shown.forEach(r => {
+    const isSf = r.kind === 'safety';
+    const el = document.createElement('div');
+    el.className = 'review';
+    el.innerHTML = '<div class="r-head"><span class="r-kind' + (isSf ? ' sf' : '') + '">' + (isSf ? '食安评分' : '店铺评价') + '</span><span class="r-score">' + r.score + ' 分</span><span class="r-time">' + fmtTime(r.created_at) + '</span></div>'
+      + '<div class="r-dishes">菜品：' + esc(r.dishes) + '</div>'
+      + (r.price ? '<div class="r-dishes">价位：' + esc(r.price) + ' 元</div>' : '')
+      + '<div class="r-text">' + esc(r.body) + '</div>';
+    list.appendChild(el);
+  });
+}
+
+/* SECTION: pick list */
+function renderPickList(listEl, onPick){
+  listEl.innerHTML = '';
+  shopsCache.forEach(s => {
+    const b = document.createElement('button');
+    b.className = 'shop-pick';
+    b.innerHTML = esc(s.name || '未命名店铺') + (s.loc ? '<small>📍 ' + esc(s.loc) + '</small>' : '');
+    b.onclick = () => onPick(s);
+    listEl.appendChild(b);
+  });
+  const add = document.createElement('button');
+  add.className = 'shop-pick-add';
+  add.innerHTML = '<span class="plus">+</span><span class="txt">没有找到店铺？试试添加一个</span>';
+  add.onclick = () => { pickCtx = { listEl: listEl, onPick: onPick }; openNewShopPage(); };
+  listEl.appendChild(add);
+}
+
+/* SECTION: new shop page */
+let pickCtx = null;
+let nsLoc = null;
+function openNewShopPage(){
+  nsLoc = null;
+  $id('ns-name').value = '';
+  $id('ns-type').value = '';
+  document.querySelectorAll('#ns-loc-row button').forEach(b => b.classList.remove('on'));
+  nsUpdateConfirm();
+  showPage('page-new-shop');
+}
+function nsUpdateConfirm(){
+  const ok = $id('ns-name').value.trim() !== '' && nsLoc !== null && $id('ns-type').value.trim() !== '';
+  $id('ns-btn-confirm').disabled = !ok;
+  $id('ns-btn-confirm').classList.toggle('blue', ok);
+}
+$id('ns-name').addEventListener('input', nsUpdateConfirm);
+$id('ns-type').addEventListener('input', nsUpdateConfirm);
+document.querySelectorAll('#ns-loc-row button').forEach(b => {
+  b.onclick = () => {
+    nsLoc = b.dataset.loc;
+    document.querySelectorAll('#ns-loc-row button').forEach(x => x.classList.toggle('on', x === b));
+    nsUpdateConfirm();
+  };
+});
+let nsBusy = false;
+$id('ns-btn-confirm').onclick = async () => {
+  if($id('ns-btn-confirm').disabled || nsBusy) return;
+  nsBusy = true;
+  $id('ns-btn-confirm').textContent = '提交中…';
+  try{
+    await sb('shops', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ name: $id('ns-name').value.trim(), loc: nsLoc, type: $id('ns-type').value.trim() }) });
+    toast('店铺档案已创建');
+  }catch(e){
+    if(e.status === 409) toast('已存在同名店铺，请直接选择');
+    else toast(e.message);
+    nsBusy = false; $id('ns-btn-confirm').textContent = '确定';
+    return;
+  }
+  nsBusy = false; $id('ns-btn-confirm').textContent = '确定';
+  await refreshShops(true); await loadAggregates();
+  if(pickCtx){
+    const pageEl = pickCtx.listEl.closest('.page');
+    renderPickList(pickCtx.listEl, pickCtx.onPick);
+    showPage(pageEl ? pageEl.id : 'view-app');
+    pickCtx = null;
+  } else {
+    showPage('view-app');
+  }
+};
+
+/* SECTION: review flow factory（纯文字，无照片上传） */
+function makeReviewFlow(type){
+  const isSafety = type === 'sf';
+  const t = type + '-';
+  let shop = null, score = null;
+  const hasPrice = !!$id(t + 'price-min');
+  function step(cur){
+    [t + 'step-pick', t + 'step-list', t + 'step-form'].forEach(id => $id(id).classList.toggle('hidden', id !== cur));
+  }
+  function priceState(){
+    if(!hasPrice) return { ok: true, val: null };
+    const min = $id(t + 'price-min').value.trim();
+    const max = $id(t + 'price-max').value.trim();
+    const err = $id(t + 'price-err');
+    if(min === '' && max === ''){ err.classList.add('hidden'); return { ok: true, val: null }; }
+    if(min === '' || max === ''){ err.textContent = '价位需两个数字都填写，或都留空'; err.classList.remove('hidden'); return { ok: false, val: null }; }
+    const a = Number(min), b = Number(max);
+    if(!Number.isFinite(a) || !Number.isFinite(b) || a < 0 || b < 0 || a > 500 || b > 500){
+      err.textContent = '价位数字需在 0~500 之间'; err.classList.remove('hidden'); return { ok: false, val: null };
+    }
+    err.classList.add('hidden');
+    return { ok: true, val: Math.min(a, b) + '-' + Math.max(a, b) };
+  }
+  function updateConfirm(){
+    const ok = score !== null && $id(t + 'dishes').value.trim() !== '' && $id(t + 'text').value.trim() !== '' && priceState().ok;
+    $id(t + 'btn-confirm').disabled = !ok;
+    $id(t + 'btn-confirm').classList.toggle('blue', ok);
+  }
+  function reset(){
+    shop = null; score = null;
+    $id(t + 'shop-name').textContent = '';
+    $id(t + 'dishes').value = ''; $id(t + 'text').value = '';
+    if(hasPrice){ $id(t + 'price-min').value = ''; $id(t + 'price-max').value = ''; $id(t + 'price-err').classList.add('hidden'); }
+    $id(t + 'score-val').textContent = '';
+    $id(t + 'score-row').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    step(t + 'step-pick');
+    updateConfirm();
+  }
+  const row = $id(t + 'score-row');
+  if(!row.childElementCount){
+    for(let i = 1; i <= 10; i++){
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = i;
+      b.onclick = () => {
+        score = i;
+        row.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+        $id(t + 'score-val').textContent = '已选 ' + i + ' 分';
+        updateConfirm();
+      };
+      row.appendChild(b);
+    }
+  }
+  $id(t + 'btn-pick-shop').onclick = () => {
+    renderPickList($id(t + 'shop-pick-list'), s => {
+      shop = s;
+      $id(t + 'shop-name').textContent = s.name || '未命名店铺';
+      step(t + 'step-form');
+    });
+    step(t + 'step-list');
+  };
+  $id(t + 'btn-back-from-list').onclick = () => step(t + 'step-pick');
+  $id(t + 'dishes').addEventListener('input', updateConfirm);
+  $id(t + 'text').addEventListener('input', updateConfirm);
+  if(hasPrice){
+    $id(t + 'price-min').addEventListener('input', updateConfirm);
+    $id(t + 'price-max').addEventListener('input', updateConfirm);
+  }
+  let busy = false;
+  $id(t + 'btn-confirm').onclick = async () => {
+    if($id(t + 'btn-confirm').disabled || busy) return;
+    busy = true;
+    $id(t + 'btn-confirm').textContent = '提交中…';
+    try{
+      await sb('reviews', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({
+        shop: shop.name,
+        kind: isSafety ? 'safety' : 'normal',
+        score: score,
+        dishes: $id(t + 'dishes').value.trim(),
+        price: priceState().val || null,
+        body: $id(t + 'text').value.trim(),
+        device_id: deviceId()
+      }) });
+      toast('已提交「' + shop.name + '」的' + (isSafety ? '食安评分' : '店铺评价'));
+      await loadAggregates();
+      showPage('view-app');
+    }catch(e){
+      toast(e.message);
+    }
+    busy = false;
+    $id(t + 'btn-confirm').textContent = '确定';
+  };
+  return { reset, updateConfirm };
+}
+const reviewFlow = { nr: makeReviewFlow('nr'), sf: makeReviewFlow('sf') };
+
+/* SECTION: search bindings */
+$id('search-input').addEventListener('input', () => { renderSearch(); renderSuggest(); });
+$id('btn-clear').onclick = () => {
+  $id('search-input').value = '';
+  locView = null;
+  document.querySelectorAll('#loc-row button').forEach(b => b.classList.remove('on'));
+  renderSearch();
+  renderSuggest();
+};
+document.querySelectorAll('#loc-row button').forEach(b => { b.onclick = () => setLocView(b.dataset.loc); });
+$id('search-input').addEventListener('focus', renderSuggest);
+$id('search-input').addEventListener('blur', () => setTimeout(() => { const s = $id('suggest'); if(s) s.classList.add('hidden'); }, 150));
+
+/* SECTION: wheel (本机个人配置) */
+const WHEEL_COLORS = ['#ffd8a8','#ffc9c9','#d3f9d8','#d0ebff','#e5dbff','#fff3bf','#ffe3e3','#c3fae8'];
+let wheel = LS.get('ndt_wheel', null) || { n: 4, items: ['', '', '', ''] };
+function wheelItems(){ return Array.from({ length: wheel.n }, (_, i) => (wheel.items[i] || '').trim()).filter(Boolean); }
+function drawWheel(rot){
+  const cv = $id('wheel-canvas'), ctx = cv.getContext('2d');
+  const c = cv.width / 2, r = c - 6;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const its = wheel.items.map(x => (x || '').trim() || '待填');
+  const n = its.length;
+  its.forEach((txt, i) => {
+    const a0 = rot + i * 2 * Math.PI / n, a1 = rot + (i + 1) * 2 * Math.PI / n;
+    ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, r, a0, a1); ctx.closePath();
+    ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save();
+    ctx.translate(c, c); ctx.rotate((a0 + a1) / 2);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#3d2c1e';
+    ctx.font = 'bold ' + (n > 6 ? 12 : 14) + 'px sans-serif';
+    ctx.fillText(txt.slice(0, 8), r - 12, 4);
+    ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(c, c, 14, 0, Math.PI * 2);
+  ctx.fillStyle = '#e8590c'; ctx.fill();
+}
+function wheelUI(){
+  $id('wheel-count').value = wheel.n;
+  const box = $id('wheel-items');
+  box.innerHTML = '';
+  for(let i = 0; i < wheel.n; i++){
+    const row = document.createElement('div');
+    row.className = 'we-item';
+    const idx = document.createElement('span'); idx.className = 'idx'; idx.textContent = i + 1;
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 12; inp.placeholder = '第 ' + (i + 1) + ' 份内容'; inp.value = wheel.items[i] || '';
+    row.appendChild(idx); row.appendChild(inp);
+    box.appendChild(row);
+  }
+  drawWheel(0);
+}
+$id('btn-wheel-apply').onclick = () => {
+  let n = parseInt($id('wheel-count').value, 10);
+  if(!Number.isFinite(n) || n < 2 || n > 12){ toast('等分数量需为 2~12'); return; }
+  const old = [...wheel.items];
+  wheel = { n: n, items: Array.from({ length: n }, (_, i) => old[i] || '') };
+  LS.set('ndt_wheel', wheel);
+  wheelUI();
+  $id('wheel-result').textContent = '已设置为 ' + n + ' 等分，请填写各等分内容';
+};
+$id('btn-wheel-save').onclick = () => {
+  wheel.items = [...document.querySelectorAll('#wheel-items input')].map(i => i.value);
+  LS.set('ndt_wheel', wheel);
+  drawWheel(0);
+  toast('转盘已更新');
+};
+let spinning = false;
+$id('btn-spin').onclick = () => {
+  const its = wheelItems();
+  if(its.length < 2){ toast('请至少填写 2 份转盘内容'); return; }
+  if(spinning) return;
+  spinning = true;
+  const n = wheel.n;
+  const validIdx = wheel.items.map((x, i) => (x || '').trim() ? i : -1).filter(i => i >= 0);
+  const target = validIdx[Math.floor(Math.random() * validIdx.length)];
+  const total = Math.PI * 2 * 5 + (Math.PI / 2 + (target + 0.5) * 2 * Math.PI / n);
+  const t0 = performance.now(), dur = 2600;
+  const res = $id('wheel-result');
+  res.classList.remove('hit');
+  res.textContent = '转动中…';
+  function frame(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const ease = 1 - Math.pow(1 - p, 3);
+    drawWheel(-total * ease);
+    if(p < 1){ requestAnimationFrame(frame); }
+    else{
+      spinning = false;
+      res.textContent = '就吃：' + wheel.items[target].trim();
+      res.classList.add('hit');
+    }
+  }
+  requestAnimationFrame(frame);
+};
+
+/* SECTION: profile */
+function profileUI(){
+  const idn = currentIdentity() || LS.get('ndt_session', {}).user || '';
+  $id('pf-current').textContent = '当前昵称：' + (idn || '未设置');
+  $id('pf-input').value = baseName(idn);
+}
+$id('pf-save').onclick = async () => {
+  const raw = $id('pf-input').value.trim();
+  if(!raw){ toast('请输入新昵称'); return; }
+  const nn = makeNickname(raw);
+  try{
+    await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()), { method: 'PATCH', body: JSON.stringify({ nickname: nn }) });
+    identityCache = nn;
+    LS.set('ndt_session', { user: nn });
+    $id('user-name').textContent = nn;
+    $id('user-avatar').textContent = nn.slice(0, 1).toUpperCase();
+    profileUI();
+    toast('昵称已更新为 ' + nn);
+  }catch(e){ toast(e.message); }
+};
+$id('pf-logout').onclick = logout;
+
+/* SECTION: boot */
+$id('btn-login').onclick = doLogin;
+$id('btn-logout').onclick = logout;
+$id('in-user').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+
+(async function init(){
+  if(!cfg()){ showCfg(true); return; }
+  try{ await fetchIdentity(); }catch(e){ /* 未配置/网络异常时停留在登录页 */ }
+  if(identityCache) $id('in-user').value = baseName(identityCache);
+  showQuickContinue(identityCache);
+  const sess = LS.get('ndt_session', null);
+  if(sess && identityCache && sess.user === identityCache) enterApp(identityCache);
+})();
+</script>
+
+</body>
+</html>
