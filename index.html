@@ -248,7 +248,7 @@ window.onerror = function (msg, src, line) {
     <button class="btn-primary" id="btn-login" data-primary-action>进入</button>
     <button class="btn-quick hidden" id="btn-quick"></button>
     <div class="login-err" id="login-err"></div>
-    <button class="btn-cfg" id="btn-cfg">☁ 云端配置</button>
+    <button class="btn-cfg" id="btn-cfg">☁ 云端配置（请勿乱动）</button>
   </div>
 </div>
 
@@ -488,7 +488,7 @@ const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-function cfg(){ return LS.get('ndt_supa_cfg', null); }
+function cfg(){ return LS.get('ndt_supa_cfg', null) || { url: 'https://cjbjkpnoakbnaekutxpk.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqYmprcG5vYWtibmFla3V0eHBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTA0MTUsImV4cCI6MjEwNTY2NjQxNX0.IITbDuZ_DOk4THLwsFmwbmV4Ix3015jAkAvn0UsXrgA' }; }
 async function sb(path, opts){
   const c = cfg();
   if(!c || !c.url || !c.key) throw new Error('尚未配置 Supabase 连接，请先在登录页"云端配置"填写');
