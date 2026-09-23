@@ -71,8 +71,8 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:12p
 .suggest .item:last-child{border-bottom:none}
 .suggest .item:hover,.suggest .item.active{background:var(--brand-soft);color:var(--brand)}
 .suggest .item b{color:var(--brand);font-weight:700}
-.loc-row{display:flex;gap:10px;margin-top:12px}
-.loc-row button{flex:1;padding:10px 6px;font-size:13.5px;border-radius:12px;background:#faf3e8;color:var(--sub);border:1.5px solid transparent;white-space:nowrap}
+.loc-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.loc-row button{flex:1 1 auto;min-width:84px;padding:10px 6px;font-size:13.5px;border-radius:12px;background:#faf3e8;color:var(--sub);border:1.5px solid transparent;white-space:nowrap}
 .loc-row button.on{background:var(--brand-soft);color:var(--brand);border-color:var(--brand);font-weight:700}
 
 /* SECTION: list */
@@ -206,7 +206,7 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:12p
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 @media (max-width:640px){
-  .loc-row{flex-direction:column}
+  .loc-row button{flex:1 1 44%}
   header.bar{flex-wrap:wrap}
 }
 </style>
@@ -278,6 +278,7 @@ window.onerror = function (msg, src, line) {
       <button type="button" data-loc="云创">云创</button>
       <button type="button" data-loc="甬江村">甬江村</button>
       <button type="button" data-loc="北区步行街及周边">北区步行街及周边</button>
+      <button type="button" data-loc="周边其他">周边其他</button>
     </div>
   </section>
 
@@ -295,6 +296,7 @@ window.onerror = function (msg, src, line) {
     <div class="add-options hidden" id="add-options">
       <button class="add-opt" id="btn-new-review">✍️ 创建新评价</button>
       <button class="add-opt" id="btn-safety-review">🛡️ 食安评分</button>
+      <button class="add-opt" id="btn-add-shop-direct">🏪 创建店铺</button>
     </div>
     <button class="btn-add" id="btn-add" aria-label="添加">+</button>
   </div>
@@ -439,6 +441,11 @@ window.onerror = function (msg, src, line) {
         <button type="button" data-loc="云创">云创</button>
         <button type="button" data-loc="甬江村">甬江村</button>
         <button type="button" data-loc="北区步行街及周边">北区步行街及周边</button>
+        <button type="button" data-loc="周边其他">周边其他</button>
+      </div>
+      <div class="nr-field hidden" id="ns-detail-wrap" style="margin-top:10px;margin-bottom:0">
+        <label for="ns-detail">具体位置 <span class="req">*</span><span class="opt-note">如：富力广场 / 万象城 / 庄市</span></label>
+        <input id="ns-detail" type="text" placeholder="请输入具体地点" autocomplete="off" maxlength="20">
       </div>
     </div>
     <div class="nr-field">
@@ -661,12 +668,15 @@ async function loadAggregates(){
   }catch(e){ /* 聚合失败不阻塞搜索 */ }
 }
 function shopFieldValue(shop, key){
+  if(key === 'loc') return [shop.loc, shop.detail].filter(Boolean).join(' ');// 大位置+小位置合并检索
   if(key === 'dishes' || key === 'price'){
     const g = shopAgg.get(shop.name);
     return g ? [...g[key]].join('、') : '';
   }
   return shop[key] == null ? '' : String(shop[key]);
 }
+// 位置展示文本：如"周边其他 · 富力广场"
+function locText(shop){ return [shop.loc, shop.detail].filter(Boolean).join(' · '); }
 let locView = null;
 function setLocView(loc){
   locView = (locView === loc) ? null : loc;
@@ -717,7 +727,7 @@ function renderSearch(){
     const card = document.createElement('article');
     card.className = 'shop-item clickable';
     card.innerHTML =
-      '<div class="si-top"><h3>' + esc(shop.name || '未命名店铺') + '</h3><span class="si-loc">' + esc(shop.loc || '') + '</span></div>' +
+      '<div class="si-top"><h3>' + esc(shop.name || '未命名店铺') + '</h3><span class="si-loc">' + esc(locText(shop)) + '</span></div>' +
       '<div class="si-type">' + esc(shop.type || '未填类型') + '</div>';
     card.onclick = () => openShopModal(shop.name);
     list.appendChild(card);
@@ -725,7 +735,7 @@ function renderSearch(){
 }
 
 /* SECTION: suggest logic */
-const LOC_OPTIONS = ['云创', '甬江村', '北区步行街及周边'];
+const LOC_OPTIONS = ['云创', '甬江村', '北区步行街及周边', '周边其他'];
 function suggestPool(){
   const terms = new Set(LOC_OPTIONS);
   shopsCache.filter(inLocView).forEach(s => {
@@ -779,6 +789,7 @@ function showPage(id){
 document.querySelectorAll('.tabbar button').forEach(b => { b.onclick = () => showPage(b.dataset.tab); });
 $id('btn-new-review').onclick = () => { reviewFlow.nr.reset(); showPage('page-new-review'); };
 $id('btn-safety-review').onclick = () => { reviewFlow.sf.reset(); showPage('page-safety-review'); };
+$id('btn-add-shop-direct').onclick = () => { pickCtx = null; openNewShopPage(); };
 document.querySelectorAll('[data-back]').forEach(b => { b.onclick = () => showPage('view-app'); });
 
 /* SECTION: shop modal */
@@ -799,7 +810,7 @@ async function openShopModal(shopName){
   const shop = shopsCache.find(s => s.name === shopName) || { name: shopName };
   $id('sm-name').textContent = shop.name || '未命名店铺';
   $id('sm-type').textContent = '所属类型：' + (shop.type || '—');
-  $id('sm-loc').textContent = shop.loc || '';
+  $id('sm-loc').textContent = locText(shop);
   $id('sm-score-normal').textContent = '…';
   $id('sm-score-safety').textContent = '…';
   $id('sm-reviews').classList.add('hidden');
@@ -848,7 +859,7 @@ function renderPickList(listEl, onPick){
   shopsCache.forEach(s => {
     const b = document.createElement('button');
     b.className = 'shop-pick';
-    b.innerHTML = esc(s.name || '未命名店铺') + (s.loc ? '<small>📍 ' + esc(s.loc) + '</small>' : '');
+    b.innerHTML = esc(s.name || '未命名店铺') + (s.loc ? '<small>📍 ' + esc(locText(s)) + '</small>' : '');
     b.onclick = () => onPick(s);
     listEl.appendChild(b);
   });
@@ -862,25 +873,31 @@ function renderPickList(listEl, onPick){
 /* SECTION: new shop page */
 let pickCtx = null;
 let nsLoc = null;
+function nsIsOther(){ return nsLoc === '周边其他'; }
 function openNewShopPage(){
   nsLoc = null;
   $id('ns-name').value = '';
   $id('ns-type').value = '';
+  $id('ns-detail').value = '';
+  $id('ns-detail-wrap').classList.add('hidden');
   document.querySelectorAll('#ns-loc-row button').forEach(b => b.classList.remove('on'));
   nsUpdateConfirm();
   showPage('page-new-shop');
 }
 function nsUpdateConfirm(){
-  const ok = $id('ns-name').value.trim() !== '' && nsLoc !== null && $id('ns-type').value.trim() !== '';
+  const ok = $id('ns-name').value.trim() !== '' && nsLoc !== null && $id('ns-type').value.trim() !== ''
+    && (!nsIsOther() || $id('ns-detail').value.trim() !== ''); // 周边其他必填具体位置
   $id('ns-btn-confirm').disabled = !ok;
   $id('ns-btn-confirm').classList.toggle('blue', ok);
 }
 $id('ns-name').addEventListener('input', nsUpdateConfirm);
 $id('ns-type').addEventListener('input', nsUpdateConfirm);
+$id('ns-detail').addEventListener('input', nsUpdateConfirm);
 document.querySelectorAll('#ns-loc-row button').forEach(b => {
   b.onclick = () => {
     nsLoc = b.dataset.loc;
     document.querySelectorAll('#ns-loc-row button').forEach(x => x.classList.toggle('on', x === b));
+    $id('ns-detail-wrap').classList.toggle('hidden', !nsIsOther()); // 选"周边其他"才显示具体位置输入
     nsUpdateConfirm();
   };
 });
@@ -890,7 +907,10 @@ $id('ns-btn-confirm').onclick = async () => {
   nsBusy = true;
   $id('ns-btn-confirm').textContent = '提交中…';
   try{
-    await sb('shops', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ name: $id('ns-name').value.trim(), loc: nsLoc, type: $id('ns-type').value.trim() }) });
+    await sb('shops', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({
+      name: $id('ns-name').value.trim(), loc: nsLoc, type: $id('ns-type').value.trim(),
+      detail: nsIsOther() ? $id('ns-detail').value.trim() : null
+    }) });
     toast('店铺档案已创建');
   }catch(e){
     if(e.status === 409) toast('已存在同名店铺，请直接选择');
