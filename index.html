@@ -118,6 +118,13 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:12p
 .shop-pick-add{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border:1.5px dashed #c9c1b6;border-radius:12px;background:transparent;color:#a89e92;font-size:13.5px;width:100%}
 .shop-pick-add:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
 .shop-pick-add .plus{font-size:28px;font-weight:300;line-height:1}
+.pick-search{margin-bottom:12px}
+.pick-search input{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--line);border-radius:11px;background:#fffdf9;outline:none}
+.pick-search input:focus{border-color:var(--brand)}
+.pick-locs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pick-locs button{padding:6px 12px;font-size:12.5px;border-radius:20px;background:#faf3e8;color:var(--sub);border:1.5px solid transparent}
+.pick-locs button.on{background:var(--brand-soft);color:var(--brand);border-color:var(--brand);font-weight:600}
+.shop-pick-empty{color:var(--sub);text-align:center;padding:20px 0;font-size:13px;border:1.5px dashed var(--line);border-radius:12px}
 .btn-mini{align-self:flex-start;padding:8px 16px;font-size:13px;color:var(--brand);background:var(--brand-soft);border-radius:10px}
 .nr-shop-name{font-size:20px;font-weight:700;text-align:center;padding-bottom:16px;border-bottom:1px dashed var(--line);margin-bottom:18px}
 .nr-field{margin-bottom:18px}
@@ -352,6 +359,16 @@ window.onerror = function (msg, src, line) {
     </div>
     <div class="nr-step hidden" id="nr-step-list">
       <h3 class="nr-h">选择要评价的店铺</h3>
+      <div class="pick-search">
+        <input id="nr-pick-kw" type="search" placeholder="搜索店铺：名称 / 位置 / 类型 / 菜品 / 价位…" autocomplete="off">
+        <div class="pick-locs" id="nr-pick-locs">
+          <button type="button" data-ploc="all" class="on">全部</button>
+          <button type="button" data-ploc="云创">云创</button>
+          <button type="button" data-ploc="甬江村">甬江村</button>
+          <button type="button" data-ploc="北区步行街及周边">北区步行街及周边</button>
+          <button type="button" data-ploc="周边其他">周边其他</button>
+        </div>
+      </div>
       <div class="shop-pick-list" id="nr-shop-pick-list"></div>
       <button class="btn-mini" id="nr-btn-back-from-list">返回</button>
     </div>
@@ -399,6 +416,16 @@ window.onerror = function (msg, src, line) {
     </div>
     <div class="nr-step hidden" id="sf-step-list">
       <h3 class="nr-h">选择要评分的店铺</h3>
+      <div class="pick-search">
+        <input id="sf-pick-kw" type="search" placeholder="搜索店铺：名称 / 位置 / 类型 / 菜品 / 价位…" autocomplete="off">
+        <div class="pick-locs" id="sf-pick-locs">
+          <button type="button" data-ploc="all" class="on">全部</button>
+          <button type="button" data-ploc="云创">云创</button>
+          <button type="button" data-ploc="甬江村">甬江村</button>
+          <button type="button" data-ploc="北区步行街及周边">北区步行街及周边</button>
+          <button type="button" data-ploc="周边其他">周边其他</button>
+        </div>
+      </div>
       <div class="shop-pick-list" id="sf-shop-pick-list"></div>
       <button class="btn-mini" id="sf-btn-back-from-list">返回</button>
     </div>
@@ -854,9 +881,28 @@ function renderReviews(){
 }
 
 /* SECTION: pick list */
+// 选店列表过滤状态：每个页面独立的关键词 + 位置（支持全库搜索与位置检索）
+const pickFilters = {
+  'nr-shop-pick-list': { kw: '', loc: 'all' },
+  'sf-shop-pick-list': { kw: '', loc: 'all' }
+};
+function pickMatch(s, f){
+  if(f.loc !== 'all' && String(s.loc || '') !== f.loc) return false;
+  if(!f.kw) return true;
+  return DIMS.some(d => shopFieldValue(s, d.key).toLowerCase().includes(f.kw));
+}
 function renderPickList(listEl, onPick){
+  if(onPick) pickHandlers[listEl.id] = onPick; // 记住本页选择回调，供搜索/位置过滤重渲染复用
   listEl.innerHTML = '';
-  shopsCache.forEach(s => {
+  const f = pickFilters[listEl.id] || { kw: '', loc: 'all' };
+  const shown = shopsCache.filter(s => pickMatch(s, f));
+  if(!shown.length){
+    const tip = document.createElement('div');
+    tip.className = 'shop-pick-empty';
+    tip.textContent = f.kw || f.loc !== 'all' ? '没有符合的店铺，换个关键词/位置试试' : '还没有店铺，试试下面添加一个';
+    listEl.appendChild(tip);
+  }
+  shown.forEach(s => {
     const b = document.createElement('button');
     b.className = 'shop-pick';
     b.innerHTML = esc(s.name || '未命名店铺') + (s.loc ? '<small>📍 ' + esc(locText(s)) + '</small>' : '');
@@ -869,6 +915,20 @@ function renderPickList(listEl, onPick){
   add.onclick = () => { pickCtx = { listEl: listEl, onPick: onPick }; openNewShopPage(); };
   listEl.appendChild(add);
 }
+// 绑定两个选店页的搜索框与位置按钮
+['nr', 'sf'].forEach(t => {
+  const listId = t + '-shop-pick-list';
+  const kwEl = $id(t + '-pick-kw');
+  kwEl.addEventListener('input', () => { pickFilters[listId].kw = kwEl.value.trim().toLowerCase(); renderPickList($id(listId), pickHandlers[listId]); });
+  document.querySelectorAll('#' + t + '-pick-locs button').forEach(b => {
+    b.onclick = () => {
+      pickFilters[listId].loc = b.dataset.ploc;
+      document.querySelectorAll('#' + t + '-pick-locs button').forEach(x => x.classList.toggle('on', x === b));
+      renderPickList($id(listId), pickHandlers[listId]);
+    };
+  });
+});
+const pickHandlers = {}; // listEl.id -> onPick，renderPickList 重渲染时复用
 
 /* SECTION: new shop page */
 let pickCtx = null;
@@ -906,14 +966,23 @@ $id('ns-btn-confirm').onclick = async () => {
   if($id('ns-btn-confirm').disabled || nsBusy) return;
   nsBusy = true;
   $id('ns-btn-confirm').textContent = '提交中…';
+  const base = $id('ns-name').value.trim();
+  const detail = nsIsOther() ? $id('ns-detail').value.trim() : null;
+  // 同名规则：位置不同 = 两家店，自动以"店名(位置)"建立新档案；同名同址才视为重复
+  const sameName = shopsCache.filter(s => s.name === base || s.name.startsWith(base + '('));
+  if(sameName.some(s => String(s.loc || '') === nsLoc && String(s.detail || '') === String(detail || ''))){
+    toast('已存在同名同位置的店铺，请直接选择');
+    nsBusy = false; $id('ns-btn-confirm').textContent = '确定';
+    return;
+  }
+  const newName = sameName.length ? base + '(' + [nsLoc, detail].filter(Boolean).join('·') + ')' : base;
   try{
     await sb('shops', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({
-      name: $id('ns-name').value.trim(), loc: nsLoc, type: $id('ns-type').value.trim(),
-      detail: nsIsOther() ? $id('ns-detail').value.trim() : null
+      name: newName, loc: nsLoc, type: $id('ns-type').value.trim(), detail: detail
     }) });
-    toast('店铺档案已创建');
+    toast('店铺档案已创建：' + newName);
   }catch(e){
-    if(e.status === 409) toast('已存在同名店铺，请直接选择');
+    if(e.status === 409) toast('同名档案已存在，请直接选择');
     else toast(e.message);
     nsBusy = false; $id('ns-btn-confirm').textContent = '确定';
     return;
@@ -965,6 +1034,9 @@ function makeReviewFlow(type){
     if(hasPrice){ $id(t + 'price-min').value = ''; $id(t + 'price-max').value = ''; $id(t + 'price-err').classList.add('hidden'); }
     $id(t + 'score-val').textContent = '';
     $id(t + 'score-row').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    pickFilters[t + 'shop-pick-list'] = { kw: '', loc: 'all' };
+    $id(t + 'pick-kw').value = '';
+    document.querySelectorAll('#' + t + '-pick-locs button').forEach(x => x.classList.toggle('on', x.dataset.ploc === 'all'));
     step(t + 'step-pick');
     updateConfirm();
   }
