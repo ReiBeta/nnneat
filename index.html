@@ -38,6 +38,13 @@ input,textarea{font-family:inherit}
 .btn-quick:hover{background:#ffdec7}
 .login-err{margin-top:10px;font-size:13px;color:#c92a2a;text-align:center;min-height:18px}
 .btn-cfg{margin-top:14px;width:100%;padding:9px;font-size:12.5px;color:var(--sub);background:#faf3e8;border-radius:10px}
+.admin-link{display:block;margin:10px auto 0;font-size:12px;color:#b7a692;background:none;text-decoration:underline}
+.admin-link:hover{color:var(--brand)}
+.admin-badge{padding:2px 8px;border-radius:20px;background:#e7f1fb;color:#1971c2;font-size:11px;font-weight:700}
+.swipe-wrap{position:relative;overflow:hidden;border-radius:14px}
+.swipe-wrap .swipe-del{position:absolute;top:0;right:0;bottom:0;width:76px;background:#c92a2a;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.swipe-wrap>.swipeable{position:relative;background:var(--card);transition:transform .12s;will-change:transform}
+.swipe-hint{font-size:11.5px;color:#b7a692;margin-top:6px}
 
 /* SECTION: config panel */
 .cfg-panel{background:#fffbe8;border:1px solid #ffe066;border-radius:14px;padding:16px;margin-bottom:16px}
@@ -253,6 +260,7 @@ window.onerror = function (msg, src, line) {
       <input id="in-user" type="text" placeholder="请输入昵称" autocomplete="off" maxlength="16">
     </div>
     <button class="btn-primary" id="btn-login" data-primary-action>进入</button>
+    <button class="admin-link" id="btn-admin-login" type="button">管理员登录（一般不用点这个）</button>
     <button class="btn-quick hidden" id="btn-quick"></button>
     <div class="login-err" id="login-err"></div>
     <button class="btn-cfg" id="btn-cfg">☁ 云端配置（请勿乱动）</button>
@@ -269,6 +277,7 @@ window.onerror = function (msg, src, line) {
     <div class="user-box">
       <div class="avatar" id="user-avatar">宁</div>
       <span id="user-name">同学</span>
+      <span class="admin-badge hidden" id="admin-badge">管理员</span>
       <button class="btn-ghost" id="btn-logout">退出</button>
     </div>
   </header>
@@ -579,14 +588,34 @@ async function createIdentity(nick){
   identityCache = nick;
 }
 
+/* SECTION: admin */
+// 管理员白名单：冻结自 2026-09-23 身份表中所有"东方乐正#xxxx"设备的 device_id。
+// 之后新注册的同名设备不在名单内，无法通过管理员登录。
+const ADMIN_DEVICES = [
+  'dev-mucxm16b-zf3gty27', // 东方乐正#7620
+  'dev-mudd9rdc-i6p6vgvy', // 东方乐正#2347
+  'dev-mude99g5-id0c3d0k', // 东方乐正#1659
+  'dev-mudiim3v-awdy7s1x', // 东方乐正#7312
+  'dev-mudk9to4-xduind01', // 东方乐正#7394
+];
+let adminMode = false; // 本次登录走的是管理员入口
+function isAdminSession(){ return LS.get('ndt_admin_session', false) === true; }
+function isWhitelistedAdmin(){ return ADMIN_DEVICES.includes(deviceId()); }
+
 /* SECTION: login */
 let loginBusy = false;
 async function doLogin(){
   if(loginBusy) return;
+  const wantAdmin = adminMode; adminMode = false; // 入口意图单次消费，避免残留影响后续普通登录
   const raw = baseName($id('in-user').value.trim());
   const err = $id('login-err');
   if(!raw){ err.textContent = '请输入昵称'; return; }
   if(!cfg()){ err.textContent = '请先在下方"云端配置"填写 Supabase 连接信息'; showCfg(true); return; }
+  // 管理员入口：仅白名单设备放行，其余显示错误
+  if(wantAdmin && !isWhitelistedAdmin()){
+    err.textContent = '错误：本设备不是管理员设备';
+    return;
+  }
   loginBusy = true; err.textContent = '连接云端…';
   try{
     let idn = currentIdentity();
@@ -598,6 +627,11 @@ async function doLogin(){
         loginBusy = false; return;
       }
     } else {
+      if(wantAdmin){
+        // 白名单设备也要求先有身份记录（普通方式登录过一次）
+        err.textContent = '错误：本机暂无身份，请先用普通方式登录一次';
+        loginBusy = false; return;
+      }
       const nick = makeNickname(raw);
       try{ await createIdentity(nick); toast('已为本设备创建身份：' + nick); }
       catch(e){
@@ -606,6 +640,7 @@ async function doLogin(){
       }
     }
     LS.set('ndt_session', { user: identityCache });
+    LS.set('ndt_admin_session', wantAdmin && isWhitelistedAdmin());
     err.textContent = '';
     enterApp(identityCache);
   } finally { loginBusy = false; }
@@ -626,15 +661,19 @@ function enterApp(username){
   showPage('view-app');
   $id('user-name').textContent = username;
   $id('user-avatar').textContent = username.slice(0, 1).toUpperCase();
+  $id('admin-badge').classList.toggle('hidden', !isAdminSession());
   refreshShops();
 }
 function logout(){
   identityCache = '';
+  adminMode = false;
   LS.set('ndt_session', null);
+  LS.set('ndt_admin_session', false);
   $id('view-app').classList.add('hidden');
   $id('tabbar').classList.add('hidden');
   $id('view-login').classList.remove('hidden');
   $id('in-user').value = '';
+  $id('login-err').textContent = '';
   showQuickContinue('');
   toast('已退出登录');
 }
@@ -757,8 +796,64 @@ function renderSearch(){
       '<div class="si-top"><h3>' + esc(shop.name || '未命名店铺') + '</h3><span class="si-loc">' + esc(locText(shop)) + '</span></div>' +
       '<div class="si-type">' + esc(shop.type || '未填类型') + '</div>';
     card.onclick = () => openShopModal(shop.name);
+    if(isAdminSession()){
+      enableSwipeDelete(card, async () => {
+        const n = encodeURIComponent(shop.name);
+        await sb('reviews?shop=eq.' + n, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
+        await sb('shops?name=eq.' + n, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
+        await refreshShops(true); await loadAggregates();
+        renderSearch();
+      });
+    }
     list.appendChild(card);
   });
+  if(isAdminSession() && results.length){
+    const hint = document.createElement('p');
+    hint.className = 'swipe-hint';
+    hint.textContent = '管理员模式：按住店铺卡片向左滑动，可露出删除按钮（删除店铺及其全部评价）';
+    list.appendChild(hint);
+  }
+}
+
+/* SECTION: admin swipe delete */
+// 管理员专用：内容左滑露出删除按钮（店铺卡片 / 档案评论通用）
+const SWIPE_W = 76;
+function enableSwipeDelete(el, onDelete){
+  el.classList.add('swipeable');
+  const btn = document.createElement('button');
+  btn.className = 'swipe-del';
+  btn.textContent = '删除';
+  btn.onclick = async e => {
+    e.stopPropagation();
+    if(!confirm('确定删除？此操作不可恢复')) return;
+    btn.disabled = true;
+    try{ await onDelete(); reset(); toast('已删除'); }
+    catch(err){ toast(err.message || '删除失败'); btn.disabled = false; }
+  };
+  const wrap = document.createElement('div');
+  wrap.className = 'swipe-wrap';
+  el.parentNode.insertBefore(wrap, el);
+  wrap.appendChild(btn); wrap.appendChild(el);
+  let startX = null, cur = 0, open = false;
+  const setX = (x, anim) => { cur = x; el.style.transition = anim ? 'transform .18s' : 'none'; el.style.transform = 'translateX(' + x + 'px)'; };
+  function reset(){ setX(0, true); open = false; }
+  function down(x){ startX = x; }
+  function move(x){ if(startX === null) return; const d = x - startX; setX(Math.max(-SWIPE_W, Math.min(0, (open ? -SWIPE_W : 0) + d)), false); }
+  function up(){
+    if(startX === null) return;
+    const wasDrag = cur < -20;
+    reset._justSwiped = wasDrag;
+    if(cur < -SWIPE_W / 2){ setX(-SWIPE_W, true); open = true; } else { setX(0, true); open = false; }
+    startX = null;
+  }
+  el.addEventListener('touchstart', e => down(e.touches[0].clientX), { passive: true });
+  el.addEventListener('touchmove', e => move(e.touches[0].clientX), { passive: true });
+  el.addEventListener('touchend', up);
+  el.addEventListener('mousedown', e => { down(e.clientX); const m = ev => move(ev.clientX); const u = () => { up(); document.removeEventListener('mousemove', m); document.removeEventListener('mouseup', u); }; document.addEventListener('mousemove', m); document.addEventListener('mouseup', u); });
+  // 滑动过程中不触发卡片点击（弹窗）
+  const block = e => { if(reset._justSwiped){ e.stopPropagation(); e.preventDefault(); reset._justSwiped = false; } };
+  el.addEventListener('click', block, true);
+  return reset;
 }
 
 /* SECTION: suggest logic */
@@ -843,9 +938,8 @@ async function openShopModal(shopName){
   $id('sm-reviews').classList.add('hidden');
   $id('shop-modal').classList.remove('hidden');
   try{
-    modalReviews = await sb('reviews?shop=eq.' + encodeURIComponent(shopName) + '&select=kind,score,dishes,price,body,created_at');
-    $id('sm-score-normal').textContent = (v => v === null ? '暂无评分' : v)(avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'normal').map(r => r.score)));
-    $id('sm-score-safety').textContent = (v => v === null ? '暂无评分' : v)(avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'safety').map(r => r.score)));
+    modalReviews = await sb('reviews?shop=eq.' + encodeURIComponent(shopName) + '&select=id,kind,score,dishes,price,body,created_at');
+    recalcModalScores();
   }catch(e){
     $id('sm-score-normal').textContent = '—';
     $id('sm-score-safety').textContent = '—';
@@ -859,7 +953,19 @@ $id('btn-view-reviews').onclick = () => {
   box.classList.toggle('hidden');
   if(!box.classList.contains('hidden')) renderReviews();
 };
+function recalcModalScores(){
+  const v1 = avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'normal').map(r => r.score));
+  const v2 = avgScoreDropExtremes(modalReviews.filter(r => r.kind === 'safety').map(r => r.score));
+  $id('sm-score-normal').textContent = v1 === null ? '暂无评分' : v1;
+  $id('sm-score-safety').textContent = v2 === null ? '暂无评分' : v2;
+}
 // 评价按时间由晚到早，完全匿名展示（不显示任何作者信息）
+async function adminDeleteReview(id){
+  await sb('reviews?id=eq.' + id, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
+  modalReviews = await sb('reviews?shop=eq.' + encodeURIComponent(curModalShop) + '&select=id,kind,score,dishes,price,body,created_at');
+  recalcModalScores();
+  renderReviews();
+}
 function renderReviews(){
   const shown = [...modalReviews].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
   const list = $id('review-list');
@@ -876,8 +982,15 @@ function renderReviews(){
       + '<div class="r-dishes">菜品：' + esc(r.dishes) + '</div>'
       + (r.price ? '<div class="r-dishes">价位：' + esc(r.price) + ' 元</div>' : '')
       + '<div class="r-text">' + esc(r.body) + '</div>';
+    if(isAdminSession()) enableSwipeDelete(el, () => adminDeleteReview(r.id));
     list.appendChild(el);
   });
+  if(isAdminSession()){
+    const hint = document.createElement('p');
+    hint.className = 'swipe-hint';
+    hint.textContent = '管理员模式：向左滑动评论可删除该条';
+    list.appendChild(hint);
+  }
 }
 
 /* SECTION: pick list */
@@ -1219,6 +1332,10 @@ $id('pf-logout').onclick = logout;
 $id('btn-login').onclick = doLogin;
 $id('btn-logout').onclick = logout;
 $id('in-user').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+$id('btn-admin-login').onclick = () => {
+  adminMode = true; // doLogin 成功或拒绝后自行复位
+  doLogin();
+};
 
 (async function init(){
   if(!cfg()){ showCfg(true); return; }
