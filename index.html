@@ -570,10 +570,33 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt
 function rand4(){ return String(Math.floor(1000 + Math.random() * 9000)); }
 function baseName(s){ return String(s || '').replace(/#\d{4}$/, '').trim(); }
 function makeNickname(raw){ return baseName(raw) + '#' + rand4(); }
-// 设备标识：本机生成一次并持久保存，服务端按 device_id 保证每台设备唯一身份
+// 设备标识：三重持久化（localStorage + Cookie + 浏览器指纹兜底）
+// 手机浏览器清理存储后，同设备仍能由指纹推导出同一 ID，随机数不再变化
+function docCookieGet(k){
+  try{ const m = document.cookie.match(new RegExp('(^|;\\s*)' + k + '=([^;]*)')); return m ? decodeURIComponent(m[2]) : ''; }
+  catch(e){ return ''; }
+}
+function docCookieSet(k, v){ try{ document.cookie = k + '=' + encodeURIComponent(v) + ';max-age=315360000;path=/;SameSite=Lax'; }catch(e){} }
+function fingerprint(){
+  const parts = [
+    navigator.userAgent || '', navigator.language || '',
+    screen.width + 'x' + screen.height + 'x' + (screen.colorDepth || 0),
+    (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+    navigator.platform || '', String(navigator.hardwareConcurrency || 0),
+    String(navigator.deviceMemory || 0), String(navigator.maxTouchPoints || 0)
+  ].join('|');
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for(let i = 0; i < parts.length; i++){
+    h1 = ((h1 ^ parts.charCodeAt(i)) >>> 0) * 16777619 >>> 0;
+    h2 = (h2 + parts.charCodeAt(i) * (i + 7)) >>> 0;
+    h2 = (h2 ^ (h2 << 13)) >>> 0; h2 = (h2 ^ (h2 >>> 17)) >>> 0;
+  }
+  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
+}
 function deviceId(){
-  let d = LS.get('ndt_device_id', '');
-  if(!d){ d = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); LS.set('ndt_device_id', d); }
+  let d = LS.get('ndt_device_id', '') || docCookieGet('ndt_device_id');
+  if(!d) d = 'fp-' + fingerprint();   // 存储被清理时由浏览器指纹稳定推导，同设备不再产生新随机数
+  LS.set('ndt_device_id', d); docCookieSet('ndt_device_id', d);
   return d;
 }
 let identityCache = '';
@@ -581,26 +604,28 @@ function currentIdentity(){ return identityCache; }
 async function fetchIdentity(){
   const rows = await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()) + '&select=nickname');
   identityCache = (rows && rows[0]) ? rows[0].nickname : '';
+  // 存储被清理导致服务端查不到时，凭本地留档（localStorage/Cookie 中的身份昵称）找回
+  if(!identityCache) identityCache = LS.get('ndt_identity', '') || docCookieGet('ndt_identity');
   return identityCache;
 }
 async function createIdentity(nick){
   await sb('identities', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ device_id: deviceId(), nickname: nick }) });
   identityCache = nick;
+  LS.set('ndt_identity', nick); docCookieSet('ndt_identity', nick); // 本地留档，供存储被清后找回
 }
 
 /* SECTION: admin */
-// 管理员白名单：冻结自 2026-09-23 身份表中所有"东方乐正#xxxx"设备的 device_id。
-// 之后新注册的同名设备不在名单内，无法通过管理员登录。
-const ADMIN_DEVICES = [
-  'dev-mucxm16b-zf3gty27', // 东方乐正#7620
-  'dev-mudd9rdc-i6p6vgvy', // 东方乐正#2347
-  'dev-mude99g5-id0c3d0k', // 东方乐正#1659
-  'dev-mudiim3v-awdy7s1x', // 东方乐正#7312
-  'dev-mudk9to4-xduind01', // 东方乐正#7394
+// 管理员白名单：冻结自 2026-09-23 身份表中全部 7 个"东方乐正#xxxx"账号，永久有效。
+// 判定以"账号昵称在冻结名单内"为准：设备本地存储被清理后即使随机号漂移
+// 生成了新账号，只要该账号此刻已存在且在冻结名单中，依旧可管理员登录。
+// 之后新注册的任何"东方乐正"账号（不在冻结名单内）不获得白名单。
+const ADMIN_NICKS = [
+  '东方乐正#7620', '东方乐正#2347', '东方乐正#1659', '东方乐正#7312', '东方乐正#7394',
+  '东方乐正#3152', '东方乐正#6647', // 随机数漂移修复前生成的两个账号，一并冻结
 ];
 let adminMode = false; // 本次登录走的是管理员入口
 function isAdminSession(){ return LS.get('ndt_admin_session', false) === true; }
-function isWhitelistedAdmin(){ return ADMIN_DEVICES.includes(deviceId()); }
+function isWhitelistedAdmin(){ return ADMIN_NICKS.includes(identityCache); }
 
 /* SECTION: login */
 let loginBusy = false;
@@ -611,16 +636,16 @@ async function doLogin(){
   const err = $id('login-err');
   if(!raw){ err.textContent = '请输入昵称'; return; }
   if(!cfg()){ err.textContent = '请先在下方"云端配置"填写 Supabase 连接信息'; showCfg(true); return; }
-  // 管理员入口：仅白名单设备放行，其余显示错误
-  if(wantAdmin && !isWhitelistedAdmin()){
-    err.textContent = '错误：本设备不是管理员设备';
-    return;
-  }
   loginBusy = true; err.textContent = '连接云端…';
   try{
     let idn = currentIdentity();
     if(!idn){ try{ idn = await fetchIdentity(); }catch(e){ err.textContent = e.message; loginBusy = false; return; } }
     if(idn){
+      // 本机已有身份：管理员入口要求该身份属于冻结账号
+      if(wantAdmin && !ADMIN_NICKS.includes(idn)){
+        err.textContent = '错误：本设备不是管理员设备';
+        loginBusy = false; return;
+      }
       if(baseName(idn) !== raw){
         err.textContent = '本设备已创建身份「' + baseName(idn) + '」，仅可用该昵称登录';
         showQuickContinue(idn);
@@ -628,8 +653,8 @@ async function doLogin(){
       }
     } else {
       if(wantAdmin){
-        // 白名单设备也要求先有身份记录（普通方式登录过一次）
-        err.textContent = '错误：本机暂无身份，请先用普通方式登录一次';
+        // 本机无身份：管理员入口不创建新账号（冻结账号必须已存在于本机身份中）
+        err.textContent = '错误：本设备不是管理员设备';
         loginBusy = false; return;
       }
       const nick = makeNickname(raw);
@@ -1318,6 +1343,7 @@ $id('pf-save').onclick = async () => {
   const nn = makeNickname(raw);
   try{
     await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()), { method: 'PATCH', body: JSON.stringify({ nickname: nn }) });
+    LS.set('ndt_identity', nn); docCookieSet('ndt_identity', nn);
     identityCache = nn;
     LS.set('ndt_session', { user: nn });
     $id('user-name').textContent = nn;
