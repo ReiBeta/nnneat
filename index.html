@@ -821,6 +821,7 @@ function renderSearch(){
       '<div class="si-top"><h3>' + esc(shop.name || '未命名店铺') + '</h3><span class="si-loc">' + esc(locText(shop)) + '</span></div>' +
       '<div class="si-type">' + esc(shop.type || '未填类型') + '</div>';
     card.onclick = () => openShopModal(shop.name);
+    list.appendChild(card); // 先入列表，滑动删除需要父节点
     if(isAdminSession()){
       enableSwipeDelete(card, async () => {
         const n = encodeURIComponent(shop.name);
@@ -830,7 +831,6 @@ function renderSearch(){
         renderSearch();
       });
     }
-    list.appendChild(card);
   });
   if(isAdminSession() && results.length){
     const hint = document.createElement('p');
@@ -1007,8 +1007,8 @@ function renderReviews(){
       + '<div class="r-dishes">菜品：' + esc(r.dishes) + '</div>'
       + (r.price ? '<div class="r-dishes">价位：' + esc(r.price) + ' 元</div>' : '')
       + '<div class="r-text">' + esc(r.body) + '</div>';
+    list.appendChild(el); // 先入列表，滑动删除需要父节点
     if(isAdminSession()) enableSwipeDelete(el, () => adminDeleteReview(r.id));
-    list.appendChild(el);
   });
   if(isAdminSession()){
     const hint = document.createElement('p');
