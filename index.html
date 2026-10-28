@@ -209,6 +209,9 @@ header.bar{display:flex;align-items:center;justify-content:space-between;gap:12p
 .pf-current{font-size:17px;font-weight:700;margin-bottom:16px}
 .pf-logout{margin-top:24px;background:#c92a2a}
 .pf-logout:hover{background:#b02525}
+.pf-admin{margin-top:22px;border-top:1px dashed var(--line);padding-top:16px}
+.pf-note{font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px}
+#pf-export-info{margin-top:8px;margin-bottom:0;color:var(--brand)}
 
 /* SECTION: tabbar */
 .tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;box-shadow:0 -4px 16px rgba(61,44,30,.06);z-index:70}
@@ -345,11 +348,19 @@ window.onerror = function (msg, src, line) {
   <div class="pf-card">
     <h3 class="nr-h">我的昵称</h3>
     <p class="pf-current" id="pf-current"></p>
+    <p class="pf-note">请记下这个完整账号（含 # 四位数字）。若浏览器清理了登录数据导致进不去，在登录页直接输入完整账号即可找回原账号。</p>
     <div class="nr-field">
       <label for="pf-input">修改昵称</label>
       <input id="pf-input" type="text" placeholder="请输入新昵称" autocomplete="off" maxlength="16">
     </div>
     <button class="btn-mini" id="pf-save">保存昵称</button>
+    <!-- SECTION: admin backup -->
+    <div class="pf-admin hidden" id="pf-admin">
+      <h3 class="nr-h">管理员数据备份</h3>
+      <p class="pf-note">导出全部店铺、评价与账号数据为 JSON 文件，保存在本机。若云端项目被暂停或删除，可凭此文件恢复，避免数据丢失。</p>
+      <button class="btn-mini" id="pf-export" data-primary-action>⬇ 导出全量数据备份</button>
+      <p class="pf-note" id="pf-export-info"></p>
+    </div>
     <button class="btn-primary pf-logout" id="pf-logout">退出网站</button>
   </div>
 </div>
@@ -652,16 +663,39 @@ async function doLogin(){
         loginBusy = false; return;
       }
     } else {
-      if(wantAdmin){
-        // 本机无身份：管理员入口不创建新账号（冻结账号必须已存在于本机身份中）
-        err.textContent = '错误：本设备不是管理员设备';
-        loginBusy = false; return;
+      // 本机无身份（存储被清理等）：支持凭"完整账号（昵称#四位随机数）"找回——
+      // 云端查到该账号后，把它的 device_id 重新绑定为本机，原账号数据无损恢复
+      const full = $id('in-user').value.trim();
+      if(/^[^#\s]+#\d{4}$/.test(full)){
+        try{
+          const found = await sb('identities?nickname=eq.' + encodeURIComponent(full) + '&select=nickname');
+          if(found && found.length){
+            if(wantAdmin && !ADMIN_NICKS.includes(full)){
+              err.textContent = '错误：该账号不在管理员名单内';
+              loginBusy = false; return;
+            }
+            await sb('identities?nickname=eq.' + encodeURIComponent(full), { method: 'PATCH', body: JSON.stringify({ device_id: deviceId() }) });
+            identityCache = full;
+            LS.set('ndt_identity', full); docCookieSet('ndt_identity', full);
+            idn = full;
+            toast('已找回原账号并绑定本设备');
+          } else {
+            err.textContent = '错误：云端没有该账号，请核对完整账号（含#四位数字）';
+            loginBusy = false; return;
+          }
+        }catch(e){ err.textContent = e.message; loginBusy = false; return; }
       }
-      const nick = makeNickname(raw);
-      try{ await createIdentity(nick); toast('已为本设备创建身份：' + nick); }
-      catch(e){
-        if(e.status === 409){ err.textContent = '该昵称的随机号已被占用，请重新输入昵称'; loginBusy = false; return; }
-        err.textContent = e.message; loginBusy = false; return;
+      if(!idn){
+        if(wantAdmin){
+          err.textContent = '错误：本设备不是管理员设备';
+          loginBusy = false; return;
+        }
+        const nick = makeNickname(raw);
+        try{ await createIdentity(nick); toast('已为本设备创建身份：' + nick); }
+        catch(e){
+          if(e.status === 409){ err.textContent = '该昵称的随机号已被占用，请重新输入昵称'; loginBusy = false; return; }
+          err.textContent = e.message; loginBusy = false; return;
+        }
       }
     }
     LS.set('ndt_session', { user: identityCache });
@@ -1336,7 +1370,57 @@ function profileUI(){
   const idn = currentIdentity() || LS.get('ndt_session', {}).user || '';
   $id('pf-current').textContent = '当前昵称：' + (idn || '未设置');
   $id('pf-input').value = baseName(idn);
+  $id('pf-admin').classList.toggle('hidden', !isAdminSession()); // 备份区仅管理员可见
 }
+// 分页取全表：Supabase 单次最多返回 1000 行，用 Range 头逐批取完
+async function fetchAll(table){
+  const CHUNK = 1000;
+  let all = [], from = 0;
+  for(;;){
+    const rows = await sb(table + '?select=*', { headers: { 'Range': from + '-' + (from + CHUNK - 1), 'Range-Unit': 'items' } }) || [];
+    all = all.concat(rows);
+    if(rows.length < CHUNK) break;
+    from += CHUNK;
+    if(from > 200000) break; // 安全上限，防死循环
+  }
+  return all;
+}
+let exporting = false;
+$id('pf-export').onclick = async () => {
+  if(exporting) return;
+  exporting = true;
+  const btn = $id('pf-export'), info = $id('pf-export-info');
+  btn.disabled = true; btn.textContent = '导出中…'; info.textContent = '';
+  try{
+    const [shops, reviews, identities] = await Promise.all([fetchAll('shops'), fetchAll('reviews'), fetchAll('identities')]);
+    const stamp = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const day = stamp.getFullYear() + pad(stamp.getMonth() + 1) + pad(stamp.getDate());
+    const data = {
+      _meta: {
+        app: '宁大学生今天吃什么（云端版）',
+        exported_at: stamp.toISOString(),
+        exported_by: currentIdentity(),
+        project_url: (cfg() || {}).url || '',
+        counts: { shops: shops.length, reviews: reviews.length, identities: identities.length }
+      },
+      shops: shops, reviews: reviews, identities: identities
+    };
+    const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '宁大学生今天吃什么-备份-' + day + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    info.textContent = '已导出：店铺 ' + shops.length + ' 家 · 评价 ' + reviews.length + ' 条 · 账号 ' + identities.length + ' 个';
+    toast('备份文件已下载到本机');
+  }catch(e){
+    info.textContent = '导出失败：' + e.message;
+    toast('导出失败，可稍后重试');
+  }
+  btn.disabled = false; btn.textContent = '⬇ 导出全量数据备份';
+  exporting = false;
+};
 $id('pf-save').onclick = async () => {
   const raw = $id('pf-input').value.trim();
   if(!raw){ toast('请输入新昵称'); return; }
@@ -1364,6 +1448,7 @@ $id('btn-admin-login').onclick = () => {
 };
 
 (async function init(){
+  try{ if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch(e){} // 申请持久化，降低存储被自动回收概率
   if(!cfg()){ showCfg(true); return; }
   try{ await fetchIdentity(); }catch(e){ /* 未配置/网络异常时停留在登录页 */ }
   if(identityCache) $id('in-user').value = baseName(identityCache);
