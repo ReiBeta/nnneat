@@ -37,24 +37,21 @@ input,textarea{font-family:inherit}
 .btn-quick{width:100%;margin-top:10px;padding:11px;font-size:14px;font-weight:600;color:var(--brand);background:var(--brand-soft);border:1.5px solid var(--brand);border-radius:12px}
 .btn-quick:hover{background:#ffdec7}
 .login-err{margin-top:10px;font-size:13px;color:#c92a2a;text-align:center;min-height:18px}
-.btn-cfg{margin-top:14px;width:100%;padding:9px;font-size:12.5px;color:var(--sub);background:#faf3e8;border-radius:10px}
 .admin-link{display:block;margin:10px auto 0;font-size:12px;color:#b7a692;background:none;text-decoration:underline}
 .admin-link:hover{color:var(--brand)}
-.admin-badge{padding:2px 8px;border-radius:20px;background:#e7f1fb;color:#1971c2;font-size:11px;font-weight:700}
+.admin-form{margin-top:12px;padding:14px;border:1.5px dashed var(--line);border-radius:14px;background:#fffdf9;text-align:left}
+.admin-form label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+.admin-form input{width:100%;padding:11px 13px;font-size:16px;letter-spacing:3px;border:1.5px solid var(--line);border-radius:11px;background:#fff;outline:none}
+.admin-form input:focus{border-color:var(--brand)}
+.admin-row{display:flex;gap:8px;margin-top:10px}
+.admin-row button{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:600}
+.admin-ok{background:var(--brand);color:#fff}
+.admin-no{background:#f3e9db;color:var(--sub)}
+.admin-badge{padding:2px 8px;border-radius:20px;background:#e7f1fb;color:#1971c2;font-size:11px;font-weight:700;cursor:pointer}
 .swipe-wrap{position:relative;overflow:hidden;border-radius:14px}
 .swipe-wrap .swipe-del{position:absolute;top:0;right:0;bottom:0;width:76px;background:#c92a2a;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .swipe-wrap>.swipeable{position:relative;background:var(--card);transition:transform .12s;will-change:transform}
 .swipe-hint{font-size:11.5px;color:#b7a692;margin-top:6px}
-
-/* SECTION: config panel */
-.cfg-panel{background:#fffbe8;border:1px solid #ffe066;border-radius:14px;padding:16px;margin-bottom:16px}
-.cfg-panel h3{font-size:14.5px;margin-bottom:10px}
-.cfg-panel label{display:block;font-size:12px;color:var(--sub);margin:8px 0 4px}
-.cfg-panel input{width:100%;padding:9px 11px;font-size:13px;border:1.5px solid var(--line);border-radius:10px;background:#fff;outline:none}
-.cfg-panel .row{display:flex;gap:8px;margin-top:12px}
-.cfg-panel .row button{flex:1;padding:9px;font-size:13.5px;border-radius:10px}
-.cfg-save{background:var(--brand);color:#fff}
-.cfg-test{background:#e9ecef;color:var(--ink)}
 
 /* SECTION: app header */
 .app{max-width:960px;margin:0 auto;padding:20px 16px 40px}
@@ -246,27 +243,23 @@ window.onerror = function (msg, src, line) {
     <div class="login-logo">🍜</div>
     <h1>宁大学生今天吃什么</h1>
     <p class="tip">云端共用版 · 解决每天最难的一问</p>
-    <!-- SECTION: config panel -->
-    <div class="cfg-panel hidden" id="cfg-panel">
-      <h3>⚙ Supabase 连接配置</h3>
-      <label>Project URL（如 https://xxxx.supabase.co）</label>
-      <input id="cfg-url" type="text" placeholder="https://xxxx.supabase.co" autocomplete="off">
-      <label>anon key（公开密钥）</label>
-      <input id="cfg-key" type="text" placeholder="eyJhbGciOi..." autocomplete="off">
-      <div class="row">
-        <button class="cfg-save" id="cfg-save">保存</button>
-        <button class="cfg-test" id="cfg-close">收起</button>
-      </div>
-    </div>
     <div class="field">
       <label for="in-user">昵称</label>
       <input id="in-user" type="text" placeholder="请输入昵称" autocomplete="off" maxlength="16">
     </div>
     <button class="btn-primary" id="btn-login" data-primary-action>进入</button>
-    <button class="admin-link" id="btn-admin-login" type="button">管理员登录（一般不用点这个）</button>
+    <button class="admin-link" id="btn-admin-login" type="button">管理员登录</button>
+    <div class="admin-form hidden" id="admin-panel">
+      <label for="in-code">邀请码（仅管理员持有）</label>
+      <input id="in-code" type="text" inputmode="numeric" maxlength="12" placeholder="请输入邀请码" autocomplete="off">
+      <div class="admin-row">
+        <button class="admin-ok" id="btn-admin-verify" type="button">验证并进入</button>
+        <button class="admin-no" id="btn-admin-cancel" type="button">取消</button>
+      </div>
+      <div class="login-err" id="admin-err"></div>
+    </div>
     <button class="btn-quick hidden" id="btn-quick"></button>
     <div class="login-err" id="login-err"></div>
-    <button class="btn-cfg" id="btn-cfg">☁ 云端配置（请勿乱动）</button>
   </div>
 </div>
 
@@ -348,15 +341,19 @@ window.onerror = function (msg, src, line) {
   <div class="pf-card">
     <h3 class="nr-h">我的昵称</h3>
     <p class="pf-current" id="pf-current"></p>
-    <p class="pf-note">请记下这个完整账号（含 # 四位数字）。若浏览器清理了登录数据导致进不去，在登录页直接输入完整账号即可找回原账号。</p>
+    <p class="pf-note">请记下这个完整账号（含 # 四位数字）。本设备会一直沿用它；若浏览器清理了数据，在登录页直接输入完整账号即可继续使用同一个名字。</p>
     <div class="nr-field">
       <label for="pf-input">修改昵称</label>
       <input id="pf-input" type="text" placeholder="请输入新昵称" autocomplete="off" maxlength="16">
     </div>
     <button class="btn-mini" id="pf-save">保存昵称</button>
-    <!-- SECTION: admin backup -->
+    <button class="admin-link" id="pf-admin-login" type="button">管理员登录 / 续期</button>
+    <!-- SECTION: admin area（临时会话 + 数据备份，仅管理员可见） -->
     <div class="pf-admin hidden" id="pf-admin">
-      <h3 class="nr-h">管理员数据备份</h3>
+      <h3 class="nr-h">管理员临时会话</h3>
+      <p class="pf-note" id="pf-admin-exp"></p>
+      <button class="btn-mini" id="pf-admin-out">退出管理员会话</button>
+      <h3 class="nr-h" style="margin-top:16px">管理员数据备份</h3>
       <p class="pf-note">导出全部店铺、评价与账号数据为 JSON 文件，保存在本机。若云端项目被暂停或删除，可凭此文件恢复，避免数据丢失。</p>
       <button class="btn-mini" id="pf-export" data-primary-action>⬇ 导出全量数据备份</button>
       <p class="pf-note" id="pf-export-info"></p>
@@ -537,15 +534,17 @@ window.onerror = function (msg, src, line) {
 <script>
 /* SECTION: supabase client */
 // 数据全部存放在 Supabase 云端，所有使用者共享同一份店铺与评价数据。
-// 配置在登录页"☁ 云端配置"填入 Project URL 与 anon key，保存在本机。
+// 连接信息内置在这里（anon key 是公开密钥，安全性由数据库 RLS 策略保证）。
+const SUPA = {
+  url: 'https://cjbjkpnoakbnaekutxpk.supabase.co',
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqYmprcG5vYWtibmFla3V0eHBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTA0MTUsImV4cCI6MjEwNTY2NjQxNX0.IITbDuZ_DOk4THLwsFmwbmV4Ix3015jAkAvn0UsXrgA'
+};
 const LS = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-function cfg(){ return LS.get('ndt_supa_cfg', null) || { url: 'https://cjbjkpnoakbnaekutxpk.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqYmprcG5vYWtibmFla3V0eHBrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwOTA0MTUsImV4cCI6MjEwNTY2NjQxNX0.IITbDuZ_DOk4THLwsFmwbmV4Ix3015jAkAvn0UsXrgA' }; }
 async function sb(path, opts){
-  const c = cfg();
-  if(!c || !c.url || !c.key) throw new Error('尚未配置 Supabase 连接，请先在登录页"云端配置"填写');
+  const c = SUPA;
   // 密钥双通道：请求头 + URL 参数（apikey query 参数），防止代理/插件剥离请求头导致 401
   // 请求头合并：默认头（含 Content-Type: application/json）为基础，opts.headers 仅追加/覆盖个别键，防止 Prefer 等头把默认头整体替换
   const sep = path.includes('?') ? '&' : '?';
@@ -581,174 +580,217 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt
 function rand4(){ return String(Math.floor(1000 + Math.random() * 9000)); }
 function baseName(s){ return String(s || '').replace(/#\d{4}$/, '').trim(); }
 function makeNickname(raw){ return baseName(raw) + '#' + rand4(); }
-// 设备标识：三重持久化（localStorage + Cookie + 浏览器指纹兜底）
-// 手机浏览器清理存储后，同设备仍能由指纹推导出同一 ID，随机数不再变化
 function docCookieGet(k){
   try{ const m = document.cookie.match(new RegExp('(^|;\\s*)' + k + '=([^;]*)')); return m ? decodeURIComponent(m[2]) : ''; }
   catch(e){ return ''; }
 }
 function docCookieSet(k, v){ try{ document.cookie = k + '=' + encodeURIComponent(v) + ';max-age=315360000;path=/;SameSite=Lax'; }catch(e){} }
-function fingerprint(){
-  const parts = [
-    navigator.userAgent || '', navigator.language || '',
-    screen.width + 'x' + screen.height + 'x' + (screen.colorDepth || 0),
-    (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
-    navigator.platform || '', String(navigator.hardwareConcurrency || 0),
-    String(navigator.deviceMemory || 0), String(navigator.maxTouchPoints || 0)
-  ].join('|');
-  let h1 = 0x811c9dc5, h2 = 0x01000193;
-  for(let i = 0; i < parts.length; i++){
-    h1 = ((h1 ^ parts.charCodeAt(i)) >>> 0) * 16777619 >>> 0;
-    h2 = (h2 + parts.charCodeAt(i) * (i + 7)) >>> 0;
-    h2 = (h2 ^ (h2 << 13)) >>> 0; h2 = (h2 ^ (h2 >>> 17)) >>> 0;
-  }
-  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
+// 设备标识：稳定随机 UUID（localStorage + Cookie 双备份）。
+// 旧版用浏览器指纹兜底，浏览器升级/缩放/换内核都会让指纹变化，进而生出一串新账号，
+// 这是"同一设备登录成不同账号"的根源，已删除。
+function uuid(){
+  try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+  return 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 function deviceId(){
   let d = LS.get('ndt_device_id', '') || docCookieGet('ndt_device_id');
-  if(!d) d = 'fp-' + fingerprint();   // 存储被清理时由浏览器指纹稳定推导，同设备不再产生新随机数
+  if(!/^[0-9a-z-]{8,}$/i.test(String(d))) d = uuid();
   LS.set('ndt_device_id', d); docCookieSet('ndt_device_id', d);
   return d;
 }
-let identityCache = '';
-function currentIdentity(){ return identityCache; }
-async function fetchIdentity(){
-  const rows = await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()) + '&select=nickname');
-  identityCache = (rows && rows[0]) ? rows[0].nickname : '';
-  // 存储被清理导致服务端查不到时，凭本地留档（localStorage/Cookie 中的身份昵称）找回
-  if(!identityCache) identityCache = LS.get('ndt_identity', '') || docCookieGet('ndt_identity');
-  return identityCache;
+/* SECTION: 临时账号（不落库，只存本机） */
+// 账号不再"注册"到数据库：本机首次进入时生成一个临时身份，之后一直沿用。
+// 服务端没有任何账号记录，所以同一设备不可能再登录成不同账号。
+const ACCOUNT_KEY = 'ndt_account', TAB_KEY = 'ndt_tab_login';
+let currentAccount = null;
+function getAccount(){
+  const a = LS.get(ACCOUNT_KEY, null);
+  if(a && a.nick) return a;
+  // 老版本遗留的本机昵称（ndt_identity）迁移一次，升级后昵称不丢
+  const legacy = LS.get('ndt_identity', '') || docCookieGet('ndt_identity');
+  if(legacy){
+    const m = { nick: legacy, device: deviceId(), born: Date.now() };
+    saveAccount(m);
+    return m;
+  }
+  return null;
 }
-async function createIdentity(nick){
-  await sb('identities', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ device_id: deviceId(), nickname: nick }) });
-  identityCache = nick;
-  LS.set('ndt_identity', nick); docCookieSet('ndt_identity', nick); // 本地留档，供存储被清后找回
+function saveAccount(a){ LS.set(ACCOUNT_KEY, a); }
+function newAccount(rawNick){
+  const a = { nick: makeNickname(rawNick), device: deviceId(), born: Date.now() };
+  saveAccount(a);
+  return a;
 }
+function renameAccount(rawNick){
+  const a = getAccount();
+  if(!a) return newAccount(rawNick);
+  a.nick = makeNickname(rawNick);
+  saveAccount(a);
+  return a;
+}
+function currentIdentity(){ return currentAccount ? currentAccount.nick : ((getAccount() || {}).nick || ''); }
 
-/* SECTION: admin */
-// 管理员白名单：冻结自 2026-09-23 身份表中全部 7 个"东方乐正#xxxx"账号，永久有效。
-// 判定以"账号昵称在冻结名单内"为准：设备本地存储被清理后即使随机号漂移
-// 生成了新账号，只要该账号此刻已存在且在冻结名单中，依旧可管理员登录。
-// 之后新注册的任何"东方乐正"账号（不在冻结名单内）不获得白名单。
-const ADMIN_NICKS = [
-  '东方乐正#7620', '东方乐正#2347', '东方乐正#1659', '东方乐正#7312', '东方乐正#7394',
-  '东方乐正#3152', '东方乐正#6647', // 随机数漂移修复前生成的两个账号，一并冻结
-];
-let adminMode = false; // 本次登录走的是管理员入口
-function isAdminSession(){ return LS.get('ndt_admin_session', false) === true; }
-function isWhitelistedAdmin(){ return ADMIN_NICKS.includes(identityCache); }
+/* SECTION: 管理员（档位二：Edge Function 校验 + 短期令牌） */
+// 旧做法把 7 个"东方乐正#xxxx"昵称写死在前端当白名单，任何人看源码就知道管理员是谁，
+// 而且设备身份一漂移就会在这些账号之间乱跳。现在改为：
+//   1. 邀请码只存在于 Edge Function 的环境变量里，前端代码中不出现；
+//   2. 输入邀请码 → 调 Function 校验 → 拿到 15 分钟有效的签名令牌（不落库、不进 localStorage）；
+//   3. 删除请求必须带令牌交给 Function 执行，anon 角色本身已被收回 DELETE 权限；
+//   4. 后台不保存任何管理员账号，每次登录都是一次性临时会话。
+const FN_URL = SUPA.url + '/functions/v1/admin-gate';
+const ADMIN_KEY = 'ndt_admin_tab';   // 只放 sessionStorage：关掉标签页即消失
+const ADMIN_TTL_FALLBACK = 900;      // 秒
+let adminSession = null, adminTimer = null;
+
+function loadAdminSession(){
+  try{
+    const s = JSON.parse(sessionStorage.getItem(ADMIN_KEY) || 'null');
+    if(s && s.token && Number(s.exp) * 1000 > Date.now() + 3000) return s;
+  }catch(e){}
+  return null;
+}
+function setAdminSession(s){
+  adminSession = s;
+  try{ sessionStorage.setItem(ADMIN_KEY, JSON.stringify(s)); }catch(e){}
+  scheduleAdminExpiry();
+  renderAdminUI();
+}
+function clearAdminSession(){
+  adminSession = null;
+  try{ sessionStorage.removeItem(ADMIN_KEY); }catch(e){}
+  if(adminTimer){ clearTimeout(adminTimer); adminTimer = null; }
+  renderAdminUI();
+}
+function scheduleAdminExpiry(){
+  if(adminTimer){ clearTimeout(adminTimer); adminTimer = null; }
+  if(!adminSession) return;
+  const ms = Math.max(0, Number(adminSession.exp) * 1000 - Date.now());
+  adminTimer = setTimeout(() => {
+    clearAdminSession();
+    toast('管理员临时会话已到期，如仍需操作请重新输入邀请码');
+    if(currentAccount) refreshShops(true);
+  }, ms + 300);
+}
+function isAdminSession(){ return !!adminSession && Number(adminSession.exp) * 1000 > Date.now(); }
+function adminMinutesLeft(){
+  if(!adminSession) return 0;
+  return Math.max(0, Math.ceil((Number(adminSession.exp) * 1000 - Date.now()) / 60000));
+}
+function renderAdminUI(){
+  const on = isAdminSession();
+  const badge = $id('admin-badge');
+  if(badge){
+    badge.classList.toggle('hidden', !on);
+    if(on) badge.title = '临时管理员会话，剩余约 ' + adminMinutesLeft() + ' 分钟';
+  }
+  const box = $id('pf-admin');
+  if(box) box.classList.toggle('hidden', !on);
+  const exp = $id('pf-admin-exp');
+  if(exp && on) exp.textContent = '临时会话，剩余约 ' + adminMinutesLeft() + ' 分钟，到期自动失效';
+}
+// 所有管理员动作统一走这个出口：Function 校验令牌后才用 service_role 删数据
+async function callAdmin(payload){
+  const r = await fetch(FN_URL, {
+    method: 'POST',
+    headers: { 'apikey': SUPA.key, 'Authorization': 'Bearer ' + SUPA.key, 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let data = null;
+  try{ data = await r.json(); }catch(e){}
+  if(!r.ok){
+    if(r.status === 401) clearAdminSession();
+    const err = new Error((data && data.error) || ('管理员校验失败(' + r.status + ')'));
+    err.status = r.status;
+    throw err;
+  }
+  return data || {};
+}
+async function adminLogin(code){
+  const res = await callAdmin({ action: 'login', code: String(code || '').trim() });
+  if(!res.token) throw new Error('服务端未返回令牌，请检查函数部署是否完整');
+  setAdminSession({ token: res.token, exp: Number(res.exp) || Math.floor(Date.now() / 1000) + ADMIN_TTL_FALLBACK });
+  return true;
+}
+async function adminDeleteReview(id){
+  if(!isAdminSession()) throw new Error('管理员会话已失效');
+  await callAdmin({ action: 'delete', token: adminSession.token, table: 'reviews', id: id });
+}
+async function adminDeleteShop(name){
+  if(!isAdminSession()) throw new Error('管理员会话已失效');
+  await callAdmin({ action: 'deleteShop', token: adminSession.token, name: name });
+}
 
 /* SECTION: login */
 let loginBusy = false;
-async function doLogin(){
-  if(loginBusy) return;
-  const wantAdmin = adminMode; adminMode = false; // 入口意图单次消费，避免残留影响后续普通登录
-  const raw = baseName($id('in-user').value.trim());
-  const err = $id('login-err');
-  if(!raw){ err.textContent = '请输入昵称'; return; }
-  if(!cfg()){ err.textContent = '请先在下方"云端配置"填写 Supabase 连接信息'; showCfg(true); return; }
-  loginBusy = true; err.textContent = '连接云端…';
-  try{
-    let idn = currentIdentity();
-    if(!idn){ try{ idn = await fetchIdentity(); }catch(e){ err.textContent = e.message; loginBusy = false; return; } }
-    if(idn){
-      // 本机已有身份：管理员入口要求该身份属于冻结账号
-      if(wantAdmin && !ADMIN_NICKS.includes(idn)){
-        err.textContent = '错误：本设备不是管理员设备';
-        loginBusy = false; return;
-      }
-      if(baseName(idn) !== raw){
-        err.textContent = '本设备已创建身份「' + baseName(idn) + '」，仅可用该昵称登录';
-        showQuickContinue(idn);
-        loginBusy = false; return;
-      }
-    } else {
-      // 本机无身份（存储被清理等）：支持凭"完整账号（昵称#四位随机数）"找回——
-      // 云端查到该账号后，把它的 device_id 重新绑定为本机，原账号数据无损恢复
-      const full = $id('in-user').value.trim();
-      if(/^[^#\s]+#\d{4}$/.test(full)){
-        try{
-          const found = await sb('identities?nickname=eq.' + encodeURIComponent(full) + '&select=nickname');
-          if(found && found.length){
-            if(wantAdmin && !ADMIN_NICKS.includes(full)){
-              err.textContent = '错误：该账号不在管理员名单内';
-              loginBusy = false; return;
-            }
-            await sb('identities?nickname=eq.' + encodeURIComponent(full), { method: 'PATCH', body: JSON.stringify({ device_id: deviceId() }) });
-            identityCache = full;
-            LS.set('ndt_identity', full); docCookieSet('ndt_identity', full);
-            idn = full;
-            toast('已找回原账号并绑定本设备');
-          } else {
-            err.textContent = '错误：云端没有该账号，请核对完整账号（含#四位数字）';
-            loginBusy = false; return;
-          }
-        }catch(e){ err.textContent = e.message; loginBusy = false; return; }
-      }
-      if(!idn){
-        if(wantAdmin){
-          err.textContent = '错误：本设备不是管理员设备';
-          loginBusy = false; return;
-        }
-        const nick = makeNickname(raw);
-        try{ await createIdentity(nick); toast('已为本设备创建身份：' + nick); }
-        catch(e){
-          if(e.status === 409){ err.textContent = '该昵称的随机号已被占用，请重新输入昵称'; loginBusy = false; return; }
-          err.textContent = e.message; loginBusy = false; return;
-        }
-      }
-    }
-    LS.set('ndt_session', { user: identityCache });
-    LS.set('ndt_admin_session', wantAdmin && isWhitelistedAdmin());
-    err.textContent = '';
-    enterApp(identityCache);
-  } finally { loginBusy = false; }
-}
-function showQuickContinue(idn){
+function showQuickContinue(acc){
   const q = $id('btn-quick');
   if(!q) return;
-  if(idn){
-    q.textContent = '以本机身份继续：' + idn;
+  if(acc){
+    q.textContent = '以本机临时账号继续：' + acc.nick;
     q.classList.remove('hidden');
-    q.onclick = () => { LS.set('ndt_session', { user: idn }); enterApp(idn); };
+    q.onclick = () => enterApp(acc);
   } else {
     q.classList.add('hidden');
   }
 }
-function enterApp(username){
-  identityCache = username;
+// 进入：本机没有账号就现场生成一个临时账号；已有账号只认它，不允许在同一设备上换号。
+// 输入完整账号（昵称#四位数字）时按该账号绑定本机——存储被清理后靠这个找回同一个名字。
+function doLogin(){
+  if(loginBusy) return;
+  const err = $id('login-err');
+  const typed = $id('in-user').value.trim();
+  if(!typed){ err.textContent = '请输入昵称'; return; }
+  const full = /^[^#\s]+#\d{4}$/.test(typed) ? typed : '';
+  const raw = baseName(typed);
+  loginBusy = true;
+  try{
+    let acc = getAccount();
+    if(acc){
+      const sameFull = !full || full === acc.nick;
+      if(!sameFull || baseName(acc.nick) !== raw){
+        err.textContent = '本设备已绑定临时账号「' + acc.nick + '」，一个设备只能有一个账号';
+        showQuickContinue(acc);
+        return;
+      }
+    } else if(full){
+      acc = { nick: full, device: deviceId(), born: Date.now() };
+      saveAccount(acc);
+      toast('已找回并绑定本机：' + acc.nick);
+    } else {
+      acc = newAccount(raw);
+      toast('已创建本机临时账号：' + acc.nick);
+    }
+    err.textContent = '';
+    enterApp(acc);
+  } finally { loginBusy = false; }
+}
+function enterApp(acc){
+  currentAccount = acc;
+  try{ sessionStorage.setItem(TAB_KEY, '1'); }catch(e){}
   showPage('view-app');
-  $id('user-name').textContent = username;
-  $id('user-avatar').textContent = username.slice(0, 1).toUpperCase();
-  $id('admin-badge').classList.toggle('hidden', !isAdminSession());
+  $id('user-name').textContent = acc.nick;
+  $id('user-avatar').textContent = acc.nick.slice(0, 1).toUpperCase();
+  renderAdminUI();
   refreshShops();
 }
 function logout(){
-  identityCache = '';
-  adminMode = false;
-  LS.set('ndt_session', null);
-  LS.set('ndt_admin_session', false);
-  $id('view-app').classList.add('hidden');
+  currentAccount = null;
+  clearAdminSession();
+  try{ sessionStorage.removeItem(TAB_KEY); }catch(e){}
+  ['view-app', 'page-random', 'page-profile', 'page-new-review', 'page-safety-review', 'page-new-shop']
+    .forEach(v => $id(v).classList.add('hidden'));
+  $id('shop-modal').classList.add('hidden');
   $id('tabbar').classList.add('hidden');
+  $id('add-wrap').classList.add('hidden');
   $id('view-login').classList.remove('hidden');
-  $id('in-user').value = '';
   $id('login-err').textContent = '';
-  showQuickContinue('');
+  $id('admin-panel').classList.add('hidden');
+  $id('admin-err').textContent = '';
+  const acc = getAccount();
+  $id('in-user').value = acc ? baseName(acc.nick) : '';
+  showQuickContinue(acc);
   toast('已退出登录');
 }
-
-/* SECTION: config panel */
-function showCfg(on){ $id('cfg-panel').classList.toggle('hidden', !on); if(on){ const c = cfg() || {}; $id('cfg-url').value = c.url || ''; $id('cfg-key').value = c.key || ''; } }
-$id('btn-cfg').onclick = () => showCfg($id('cfg-panel').classList.contains('hidden'));
-$id('cfg-close').onclick = () => showCfg(false);
-$id('cfg-save').onclick = async () => {
-  const url = $id('cfg-url').value.trim().replace(/\/+$/, ''), key = $id('cfg-key').value.trim();
-  if(!/^https?:\/\/.+/.test(url) || !key){ toast('请填写完整的 Project URL 与 anon key'); return; }
-  LS.set('ndt_supa_cfg', { url: url, key: key });
-  toast('已保存，正在测试连接…');
-  try{ await refreshShops(true); toast('云端连接成功 ✓'); showCfg(false); }
-  catch(e){ toast('连接失败：' + e.message); }
-};
 
 /* SECTION: shops data (cloud) */
 let shopsCache = [];
@@ -858,9 +900,7 @@ function renderSearch(){
     list.appendChild(card); // 先入列表，滑动删除需要父节点
     if(isAdminSession()){
       enableSwipeDelete(card, async () => {
-        const n = encodeURIComponent(shop.name);
-        await sb('reviews?shop=eq.' + n, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
-        await sb('shops?name=eq.' + n, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
+        await adminDeleteShop(shop.name);
         await refreshShops(true); await loadAggregates();
         renderSearch();
       });
@@ -1019,8 +1059,9 @@ function recalcModalScores(){
   $id('sm-score-safety').textContent = v2 === null ? '暂无评分' : v2;
 }
 // 评价按时间由晚到早，完全匿名展示（不显示任何作者信息）
-async function adminDeleteReview(id){
-  await sb('reviews?id=eq.' + id, { method: 'DELETE', headers: { 'Prefer': 'return=minimal' } });
+// 删除不再由前端直接 DELETE（anon 权限已收回），改为带令牌请求 Edge Function
+async function adminDeleteReviewRemote(id){
+  await adminDeleteReview(id);
   modalReviews = await sb('reviews?shop=eq.' + encodeURIComponent(curModalShop) + '&select=id,kind,score,dishes,price,body,created_at');
   recalcModalScores();
   renderReviews();
@@ -1042,7 +1083,7 @@ function renderReviews(){
       + (r.price ? '<div class="r-dishes">价位：' + esc(r.price) + ' 元</div>' : '')
       + '<div class="r-text">' + esc(r.body) + '</div>';
     list.appendChild(el); // 先入列表，滑动删除需要父节点
-    if(isAdminSession()) enableSwipeDelete(el, () => adminDeleteReview(r.id));
+    if(isAdminSession()) enableSwipeDelete(el, () => adminDeleteReviewRemote(r.id));
   });
   if(isAdminSession()){
     const hint = document.createElement('p');
@@ -1367,11 +1408,27 @@ $id('btn-spin').onclick = () => {
 
 /* SECTION: profile */
 function profileUI(){
-  const idn = currentIdentity() || LS.get('ndt_session', {}).user || '';
-  $id('pf-current').textContent = '当前昵称：' + (idn || '未设置');
-  $id('pf-input').value = baseName(idn);
-  $id('pf-admin').classList.toggle('hidden', !isAdminSession()); // 备份区仅管理员可见
+  const acc = getAccount();
+  $id('pf-current').textContent = '当前昵称：' + (acc ? acc.nick : '未设置');
+  $id('pf-input').value = acc ? baseName(acc.nick) : '';
+  renderAdminUI();
 }
+$id('pf-save').onclick = () => {
+  const raw = $id('pf-input').value.trim();
+  if(!raw){ toast('请输入新昵称'); return; }
+  const acc = renameAccount(raw);
+  currentAccount = acc;
+  $id('user-name').textContent = acc.nick;
+  $id('user-avatar').textContent = acc.nick.slice(0, 1).toUpperCase();
+  profileUI();
+  toast('昵称已更新为 ' + acc.nick);
+};
+$id('pf-logout').onclick = logout;
+$id('pf-admin-out').onclick = () => {
+  clearAdminSession();
+  toast('已退出管理员会话');
+  if(currentAccount) refreshShops(true);
+};
 // 分页取全表：Supabase 单次最多返回 1000 行，用 Range 头逐批取完
 async function fetchAll(table){
   const CHUNK = 1000;
@@ -1401,7 +1458,7 @@ $id('pf-export').onclick = async () => {
         app: '宁大学生今天吃什么（云端版）',
         exported_at: stamp.toISOString(),
         exported_by: currentIdentity(),
-        project_url: (cfg() || {}).url || '',
+        project_url: SUPA.url,
         counts: { shops: shops.length, reviews: reviews.length, identities: identities.length }
       },
       shops: shops, reviews: reviews, identities: identities
@@ -1421,40 +1478,70 @@ $id('pf-export').onclick = async () => {
   btn.disabled = false; btn.textContent = '⬇ 导出全量数据备份';
   exporting = false;
 };
-$id('pf-save').onclick = async () => {
-  const raw = $id('pf-input').value.trim();
-  if(!raw){ toast('请输入新昵称'); return; }
-  const nn = makeNickname(raw);
-  try{
-    await sb('identities?device_id=eq.' + encodeURIComponent(deviceId()), { method: 'PATCH', body: JSON.stringify({ nickname: nn }) });
-    LS.set('ndt_identity', nn); docCookieSet('ndt_identity', nn);
-    identityCache = nn;
-    LS.set('ndt_session', { user: nn });
-    $id('user-name').textContent = nn;
-    $id('user-avatar').textContent = nn.slice(0, 1).toUpperCase();
-    profileUI();
-    toast('昵称已更新为 ' + nn);
-  }catch(e){ toast(e.message); }
-};
-$id('pf-logout').onclick = logout;
 
 /* SECTION: boot */
 $id('btn-login').onclick = doLogin;
 $id('btn-logout').onclick = logout;
 $id('in-user').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+// 管理员入口：输入邀请码 → Edge Function 校验 → 拿短期令牌（前端不保存邀请码）
 $id('btn-admin-login').onclick = () => {
-  adminMode = true; // doLogin 成功或拒绝后自行复位
-  doLogin();
+  const p = $id('admin-panel');
+  p.classList.toggle('hidden');
+  $id('admin-err').textContent = '';
+  if(!p.classList.contains('hidden')) $id('in-code').focus();
 };
+$id('btn-admin-cancel').onclick = () => {
+  $id('admin-panel').classList.add('hidden');
+  $id('in-code').value = '';
+  $id('admin-err').textContent = '';
+};
+$id('btn-admin-verify').onclick = async () => {
+  const btn = $id('btn-admin-verify'), err = $id('admin-err');
+  const code = $id('in-code').value.trim();
+  if(!code){ err.textContent = '请输入邀请码'; return; }
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '校验中…'; err.textContent = '';
+  try{
+    await adminLogin(code);
+    $id('in-code').value = '';
+    $id('admin-panel').classList.add('hidden');
+    toast('管理员验证通过：临时会话 15 分钟');
+    const acc = getAccount();
+    if(acc) enterApp(acc); else toast('请先输入昵称进入');
+  }catch(e){
+    err.textContent = (e.status === 401) ? '邀请码不正确' : e.message;
+  }finally{ btn.disabled = false; btn.textContent = label; }
+};
+$id('in-code').addEventListener('keydown', e => { if(e.key === 'Enter') $id('btn-admin-verify').click(); });
+// 会话过期后可就地续期（头像旁的管理员徽标 / 个人页入口）
+async function promptAdminLogin(){
+  let code = '';
+  try{ code = prompt('请输入管理员邀请码（临时会话 15 分钟）') || ''; }catch(e){ return; }
+  if(!code.trim()) return;
+  try{
+    await adminLogin(code.trim());
+    toast('管理员验证通过：临时会话 15 分钟');
+    if(currentAccount) refreshShops(true);
+  }catch(e){
+    toast(e.status === 401 ? '邀请码不正确' : e.message);
+  }
+}
+$id('admin-badge').onclick = promptAdminLogin;
+$id('pf-admin-login').onclick = promptAdminLogin;
 
 (async function init(){
-  try{ if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch(e){} // 申请持久化，降低存储被自动回收概率
-  if(!cfg()){ showCfg(true); return; }
-  try{ await fetchIdentity(); }catch(e){ /* 未配置/网络异常时停留在登录页 */ }
-  if(identityCache) $id('in-user').value = baseName(identityCache);
-  showQuickContinue(identityCache);
-  const sess = LS.get('ndt_session', null);
-  if(sess && identityCache && sess.user === identityCache) enterApp(identityCache);
+  // 申请持久化存储，降低浏览器自动回收本机临时账号的概率
+  try{ if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch(e){}
+  adminSession = loadAdminSession();
+  renderAdminUI();
+  const acc = getAccount();
+  if(acc){
+    $id('in-user').value = baseName(acc.nick);
+    showQuickContinue(acc);
+  }
+  let inTab = false;
+  try{ inTab = sessionStorage.getItem(TAB_KEY) === '1'; }catch(e){}
+  if(acc && inTab) enterApp(acc);
 })();
 </script>
 
